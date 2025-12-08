@@ -1,0 +1,189 @@
+<header>
+  <h1>Enterprise Emergency Contacts</h1>
+  <nav>
+    <button class="btn btn-primary" (click)="goCreate()">{{ showCreateForm ? 'Cancel' : 'New Contact' }}</button>
+  </nav>
+</header>
+
+<section>
+  <form (ngSubmit)="onFilter()">
+    <div>
+      <label>Search</label>
+      <input type="text" [(ngModel)]="search" name="search" placeholder="Search by name or email" />
+    </div>
+    <div>
+      <label>Status</label>
+      <select [(ngModel)]="status" name="status">
+        <option value="all">All</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+    <button type="submit">FILTER</button>
+    <button type="button" (click)="onClear()">CLEAR</button>
+  </form>
+</section>
+
+<main *ngIf="!showRouteOutlet">
+  <div *ngIf="loading" class="loading">Loading...</div>
+  <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
+
+  <div *ngIf="showCreateForm" class="form-container">
+    <h3>Create New Contact</h3>
+    <div *ngIf="formError" class="form-error">{{ formError }}</div>
+    <form (ngSubmit)="saveNewContact()">
+      <div class="form-group">
+        <label>First Name</label>
+        <input type="text" [(ngModel)]="newItem.first_name" name="first_name" required />
+      </div>
+      <div class="form-group">
+        <label>Last Name</label>
+        <input type="text" [(ngModel)]="newItem.last_name" name="last_name" required />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" [(ngModel)]="newItem.email" name="email" required />
+      </div>
+      <div class="form-group">
+        <label>Mobile</label>
+        <div class="mobile-input">
+          <select [(ngModel)]="selectedCountryCode" name="countryCode" class="country-code"
+            (change)="updateMobileNumber()">
+            <option *ngFor="let country of countries" [value]="country.dial_code">
+              {{ country.name }} ({{ country.dial_code}})
+            </option>
+          </select>
+          <input type="text" [(ngModel)]="mobileNumber" name="mobile" placeholder="Enter mobile number"
+            (input)="updateMobileNumber()" />
+        </div>
+
+      </div>
+      <div class="form-group">
+        <label>Event Notification</label>
+        <div class="radio-group">
+          <label>
+            <input type="radio" name="event_notification" [value]="'all'" [(ngModel)]="newItem.event_notification" (change)="onNotificationModeChange('all')" />
+            All Organizational App Users
+          </label>
+          <label>
+            <input type="radio" name="event_notification" [value]="'selected'"
+              [(ngModel)]="newItem.event_notification" (change)="onNotificationModeChange('selected')" />
+            Selection Notification Group
+          </label>
+          <!-- In your app.html file, replace the notification group section with this code: -->
+          <div *ngIf="newItem.event_notification === 'selected'" class="notification-group-input"
+            style="margin-top: 8px;">
+            <!-- Selected Groups as Badges -->
+            <div class="selected-groups mb-2" *ngIf="selectedGroups.length > 0">
+              <span class="badge bg-primary me-2 mb-2 d-inline-flex align-items-center"
+                *ngFor="let groupId of selectedGroups">
+                {{ getGroupName(groupId) }}
+                <button type="button" class="btn-close btn-close-white ms-2"
+                  (click)="$event.stopPropagation(); removeGroup(groupId)" aria-label="Remove"></button>
+              </span>
+            </div>
+
+            <!-- Group Selection Input -->
+            <!-- Replace the Group Selection Input and Dropdown sections with this: -->
+            <div class="input-group mb-2">
+              <input type="text" class="form-control" [(ngModel)]="groupSearch" (input)="filterGroups()"
+                (keyup.enter)="onEnterKey()" (blur)="onInputBlur()" placeholder="Search and select groups..."
+                [disabled]="loadingGroups">
+            </div>
+
+            <!-- Available Groups Dropdown -->
+            <div class="dropdown" [class.show]="filteredGroups.length > 0">
+              <div class="dropdown-menu w-100 show" *ngIf="filteredGroups.length > 0">
+                <a class="dropdown-item d-flex align-items-center justify-content-between"
+                  *ngFor="let group of filteredGroups" (mousedown)="selectGroup(group); $event.preventDefault()">
+                  <span>{{ group.name }}</span>
+                  <span *ngIf="group.isNew" class="badge bg-info">New</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Loading State -->
+            <div *ngIf="loadingGroups" class="text-muted mt-2">
+              Loading groups...
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Event Types</label>
+        <div class="checkbox-group">
+          <label *ngFor="let event of ['911', 'Sos', 'Timer', 'Safewalk']">
+            <input type="checkbox" [value]="event" [checked]="newItem.eventTypesArray?.includes(event)"
+              (change)="updateEventTypes(event, $event.target.checked)" />
+            {{ event }}
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Status</label>
+        <div class="radio-group">
+          <label>
+            <input type="radio" name="status" [value]="true" [(ngModel)]="newItem.is_active"
+              [ngModelOptions]="{standalone: false}" />
+            Active
+          </label>
+          <label>
+            <input type="radio" name="status" [value]="false" [(ngModel)]="newItem.is_active"
+              [ngModelOptions]="{standalone: false}" />
+            Inactive
+          </label>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="formSaving">
+          {{ formSaving ? 'Saving...' : 'Save' }}
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="cancelNewContact()">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <table *ngIf="!loading && filteredItems?.length">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Email</th>
+        <th>Mobile</th>
+        <th>Event Types</th>
+        <th>Active</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let it of filteredItems; let i = index" [style.background]="i % 2 === 0 ? '#f7f7f7' : '#ffffff'">
+        <td>{{ it.id }}</td>
+        <td>{{ it.first_name }}</td>
+        <td>{{ it.last_name }}</td>
+        <td>{{ it.email }}</td>
+        <td>{{ it.mobile }}</td>
+        <td>{{ it.event_types || '-' }}</td>
+        <td style="text-align:center;"><input type="checkbox" [checked]="it.is_active" disabled /></td>
+        <td>
+          <button type="button" (click)="$event.stopPropagation(); goView(it.id)" class="btn-info">View</button>
+          <button type="button" (click)="$event.stopPropagation(); goEdit(it.id)" class="btn-secondary">Edit</button>
+          <button type="button" (click)="$event.stopPropagation(); remove(it.id)" class="btn-danger">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <div *ngIf="!loading && (!filteredItems || filteredItems.length === 0)" class="no-data">No items found.</div>
+
+  <div *ngIf="!loading" class="pagination">
+    <button class="btn" (click)="prevPage()" [disabled]="currentPage === 1">← Previous</button>
+    <span class="page-info">Page {{ currentPage }} of {{ totalPages }} — total items: {{ totalItems }}</span>
+    <button class="btn" (click)="nextPage()" [disabled]="currentPage === totalPages">Next →</button>
+  </div>
+</main>
+<!-- Router outlet for route-based views (detail/edit pages) -->
+<router-outlet *ngIf="showRouteOutlet"></router-outlet>

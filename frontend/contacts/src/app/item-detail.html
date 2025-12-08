@@ -1,0 +1,40 @@
+<div class="container">
+  <div *ngIf="loading" class="loading">Loading...</div>
+  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+  <div *ngIf="item" class="detail-item">
+    <h3>Contact Details</h3>
+    <div class="detail-field">
+      <strong>ID</strong>
+      <span>{{ item.id }}</span>
+    </div>
+    <div class="detail-field">
+      <strong>First Name</strong>
+      <span>{{ item.first_name }}</span>
+    </div>
+    <div class="detail-field">
+      <strong>Last Name</strong>
+      <span>{{ item.last_name }}</span>
+    </div>
+    <div class="detail-field">
+      <strong>Email</strong>
+      <span>{{ item.email }}</span>
+    </div>
+    <div class="detail-field">
+      <strong>Mobile</strong>
+      <span>{{ item.mobile }}</span>
+    </div>
+    <div class="detail-field">
+      <strong>Event Types</strong>
+      <span>{{ item.event_types }}</span>
+    </div>
+    <div class="detail-field">
+      <strong>Status</strong>
+      <span [ngClass]="item.is_active ? 'active' : 'inactive'">{{ item.is_active ? 'Active' : 'Inactive' }}</span>
+    </div>
+    <div class="button-group">
+      <button class="btn btn-primary" (click)="goEdit()">Edit</button>
+      <a class="btn btn-secondary" routerLink="/items">Back to List</a>
+    </div>
+  </div>
+</div>
+
