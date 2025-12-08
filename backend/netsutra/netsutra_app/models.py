@@ -52,8 +52,8 @@ class Contact(models.Model):
         blank=True,
         validators=[
             RegexValidator(
-                regex=r'^\+?1?\d{9,15}$',
-                message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed."
+                regex=r'^\+?\d[\d-]{8,14}\d$',
+                message="Phone number must be entered in the format: '+44-9564916773'. Up to 15 digits allowed."
             )
         ]
     )

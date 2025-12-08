@@ -24,9 +24,14 @@
       <span>{{ item.mobile }}</span>
     </div>
     <div class="detail-field">
-      <strong>Event Types</strong>
-      <span>{{ item.event_types }}</span>
+      <strong>Event Notification Groups</strong>
+      <span>{{ formatGroups(item.event_notification_groups) }}</span>
     </div>
+    <div class="detail-field">
+      <strong>Event Types</strong>
+      <span>{{ formatEventTypes(item.event_types) }}</span>
+    </div>
+    
     <div class="detail-field">
       <strong>Status</strong>
       <span [ngClass]="item.is_active ? 'active' : 'inactive'">{{ item.is_active ? 'Active' : 'Inactive' }}</span>

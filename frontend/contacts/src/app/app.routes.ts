@@ -8,8 +8,8 @@ export const routes: Routes = [
 	{ path: 'items/create', loadComponent: () => import('./item-form.component').then(m => m.ItemFormComponent) },
 	{
 		path: 'items/:id',
-		loadComponent: () => import('./item-detail.component').then(m => m.ItemDetailComponent),
-		resolve: { item: ItemResolver }
+		loadComponent: () => import('./components/retrieve/item-detail').then(m => m.ItemDetailComponent)
+
 	},
 	{
 		path: 'items/:id/edit',

@@ -2,6 +2,7 @@ import { Component, signal, OnInit, ChangeDetectorRef, NgZone, Inject, PLATFORM_
 import { RouterOutlet, Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { ItemsService } from './items.service';
 import { EventType } from './item.model';
 import { Item } from './item.model';
@@ -76,8 +77,14 @@ export class App implements OnInit {
     { code: 'BR', name: 'Brazil', dial_code: '+55' }
   ];
 
-  private svc = new ItemsService();
-
+constructor(
+  private itemsService: ItemsService,
+  private router: Router,
+  private cd: ChangeDetectorRef,
+  private ngZone: NgZone,
+  @Inject(PLATFORM_ID) private platformId: Object,
+  private http: HttpClient
+) { }
   // Load country codes from API or use defaults
   private async loadCountryCodes(): Promise<void> {
     try {
@@ -90,12 +97,6 @@ export class App implements OnInit {
     }
   }
 
-  constructor(
-    private router: Router,
-    private cd: ChangeDetectorRef,
-    private ngZone: NgZone,
-    @Inject(PLATFORM_ID) private platformId: Object
-  ) { }
 
   async loadNotificationGroups(): Promise<void> {
     this.loadingGroups = true;
@@ -304,7 +305,7 @@ async reload() {
     'color: #0066cc; font-weight: bold; font-size: 14px;');
 
   try {
-    const result = await this.svc.getContacts(this.currentPage);
+    const result = await this.itemsService.getContacts(this.currentPage);
 
     this.ngZone.run(() => {
       this.items = result.items;
@@ -400,7 +401,7 @@ console.dir(this.filteredItems, { depth: null, colors: true });
     this.cd.markForCheck();
 
     try {
-      await this.svc.createContact(this.newItem);
+      await this.itemsService.createContact(this.newItem);
       this.showCreateForm = false;
       this.newItem = { is_active: true };
       this.currentPage = 1;
@@ -438,7 +439,7 @@ console.dir(this.filteredItems, { depth: null, colors: true });
     if (id == null) return;
     if (!confirm('Delete this item?')) return;
     try {
-      await this.svc.deleteContact(id);
+      await this.itemsService.deleteContact(id);
       this.successMessage = 'Contact deleted successfully';
       setTimeout(() => { this.successMessage = null; this.cd.markForCheck(); }, 4000);
       await this.reload();
@@ -473,7 +474,7 @@ console.dir(this.filteredItems, { depth: null, colors: true });
   }
 
   formatEventTypes(types: any[] | undefined): string {
-    return types?.length ? types.map(t => t.event_name).join(', ') : '—';
+    return types?.length ? types.map(t => t.event_name).join(' ') : '—';
   }
 
   private isLandingPage(): boolean {

@@ -17,9 +17,13 @@ export class ItemsComponent implements OnInit {
   loading = false;
   error: string | null = null;
 
-  private svc = new ItemsService();
-
-  constructor(private router: Router) {}
+// In items.component.ts, replace the line:
+// private svc = new ItemsService();
+// with:
+constructor(
+  private router: Router,
+  private svc: ItemsService
+) {}
 
   ngOnInit(): void {
     this.reload();

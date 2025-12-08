@@ -150,6 +150,7 @@
   <table *ngIf="!loading && filteredItems?.length">
     <thead>
       <tr>
+        <th>ID</th>
         <th>First Name</th>
         <th>Last Name</th>
         <th>Email</th>
@@ -161,6 +162,7 @@
     </thead>
     <tbody>
       <tr *ngFor="let it of filteredItems; let i = index" [style.background]="i % 2 === 0 ? '#f7f7f7' : '#ffffff'">
+        <td>{{ it.id }}</td>
         <td>{{ it.first_name }}</td>
         <td>{{ it.last_name }}</td>
         <td>{{ it.email }}</td>
