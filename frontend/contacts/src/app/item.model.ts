@@ -4,7 +4,10 @@ export interface Item {
   last_name: string;
   email: string;
   mobile?: string;
+  event_notification?: 'all' | 'selected' | 'none';
   event_notification_groups?: EventNotificationGroup[];
+  selected_groups?: Array<{ id: string; name: string }>;
+  eventTypesArray?: string[];
   event_types?: EventType[];
   is_active: boolean;
   created_at?: string;

@@ -12,6 +12,6 @@ export class ItemResolver implements Resolve<Item> {
   resolve(route: ActivatedRouteSnapshot) {
     const id = route.paramMap.get('id');
     if (!id) throw new Error('Item ID is required');
-    return this.itemsService.get(id);
+    return this.itemsService.getContact(id);
   }
 }

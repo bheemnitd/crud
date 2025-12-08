@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ItemsService } from './items.service';
-import { Item } from './item.model';
+import { Item, EventNotificationGroup, EventType } from './item.model';
 
 interface EventTypeOption {
   value: string;
@@ -25,7 +25,7 @@ const DEFAULT_ITEM: Partial<Item> = {
   last_name: '',
   email: '',
   mobile: '',
-  event_types: '',
+  event_types: [],
   is_active: true
 };
 
@@ -45,9 +45,10 @@ const EVENT_TYPE_OPTIONS: Omit<EventTypeOption, 'selected'>[] = [
 })
 
 export class ItemFormComponent implements OnInit {
-  item: Partial<Item> = {
+  item: Partial<Item> & { event_notification?: 'all' | 'selected' | 'none' } = {
     ...DEFAULT_ITEM,
-    event_notification: 'all' // Ensure this is always initialized
+    event_notification: 'all',
+    event_notification_groups: []
   };
   eventTypeOptions: EventTypeOption[] = [];
   saving = false;
@@ -82,7 +83,7 @@ export class ItemFormComponent implements OnInit {
 
   onEventTypeChange(eventType: string, isChecked: boolean): void {
     this.updateSelectedEventTypes(eventType, isChecked);
-    this.item.event_types = this.selectedEventTypes.join(',');
+    this.ensureEventTypes();
     this.markFormDirty();
   }
 
@@ -96,11 +97,6 @@ export class ItemFormComponent implements OnInit {
     try {
       // Ensure event_types is up to date before saving
       this.ensureEventTypes();
-
-      // Ensure event_types is not null
-      if (!this.item.event_types) {
-        this.item.event_types = '';
-      }
 
       await this.saveItem();
       this.handleSaveSuccess();
@@ -159,29 +155,31 @@ export class ItemFormComponent implements OnInit {
     this.item = {
       ...loadedItem,
       is_active: loadedItem.is_active ?? true,
-      event_types: loadedItem.event_types || '' // Ensure event_types is never null
+      event_types: Array.isArray(loadedItem.event_types) 
+        ? loadedItem.event_types 
+        : []
     };
 
     this.updateEventTypeSelections(this.item.event_types);
   }
 
-  private updateEventTypeSelections(eventTypes: string = ''): void {
-    const selectedTypes = eventTypes ? eventTypes.split(',').map(t => t.trim()) : [];
+  private updateEventTypeSelections(eventTypes: EventType[] = []): void {
+    const selectedValues = eventTypes.map(et => et.event_name);
     this.eventTypeOptions = this.eventTypeOptions.map(option => ({
       ...option,
-      selected: selectedTypes.includes(option.value)
+      selected: selectedValues.includes(option.value)
     }));
   }
 
   private async loadItem(id: string): Promise<void> {
     this.loading = true;
     try {
-      const loadedItem = await this.itemsService.get(id);
+      const loadedItem = await this.itemsService.getContact(id);
       if (loadedItem) {
         this.initializeItem(loadedItem);
         // If there are selected groups in the loaded item, ensure they have the correct structure
-        if (loadedItem.selected_groups && Array.isArray(loadedItem.selected_groups)) {
-          this.selectedGroups = loadedItem.selected_groups
+        if (loadedItem.event_notification_groups  && Array.isArray(loadedItem.event_notification_groups )) {
+          this.selectedGroups = loadedItem.event_notification_groups 
             .filter((group: any) => group && group.id && group.name)
             .map((group: any) => ({
               id: group.id,
@@ -230,15 +228,18 @@ async loadNotificationGroups(): Promise<void> {
   }
 }
 // Update the onNotificationModeChange method to:
-onNotificationModeChange(mode: 'all' | 'selected'): void {
-  if (mode === 'selected') {
-    // When switching to 'selected' mode, show all available groups that aren't selected
-    this.filterGroups();
-  } else {
-    // Clear search when switching back to 'all' mode
-    this.groupSearch = '';
+  onNotificationModeChange(mode: 'all' | 'selected'): void {
+    this.item.event_notification = mode;
+    this.markFormDirty();
+    if (mode === 'selected') {
+      // When switching to 'selected' mode, show all available groups that aren't selected
+      this.filterGroups();
+    } else {
+      // Clear search when switching back to 'all' mode
+      this.groupSearch = '';
+    }
   }
-}
+
   filterGroups(): void {
     const searchTerm = this.groupSearch.trim().toLowerCase();
     const selectedGroupIds = this.selectedGroups.map(g => g.id);
@@ -329,9 +330,18 @@ onNotificationModeChange(mode: 'all' | 'selected'): void {
   }
 
   private ensureEventTypes(): void {
-    if (this.item) {
-      this.item.event_types = this.selectedEventTypes.join(', ');
-    }
+    if (!this.item) return;
+    
+    const selectedTypes = this.eventTypeOptions
+      .filter(opt => opt.selected)
+      .map(opt => ({
+        event_name: opt.value,
+        id: 0, // Will be set by the backend
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      } as EventType));
+      
+    this.item.event_types = selectedTypes;
   }
 
   private updateSelectedEventTypes(eventType: string, isChecked: boolean): void {
@@ -349,15 +359,18 @@ onNotificationModeChange(mode: 'all' | 'selected'): void {
   }
 
   private async saveItem(): Promise<void> {
-    this.item.event_types = this.selectedEventTypes.join(',');
+    if (!this.item) return;
+    
+    // Ensure event_types is up to date
+    this.ensureEventTypes();
     
     // Include selected groups in the item data
     this.item.selected_groups = [...this.selectedGroups];
 
     if (this.item.id) {
-      await this.itemsService.update(this.item.id, this.item);
+      await this.itemsService.updateContact(this.item.id, this.item);
     } else {
-      await this.itemsService.create(this.item);
+      await this.itemsService.createContact(this.item);
     }
   }
 

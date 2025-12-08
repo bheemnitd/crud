@@ -76,10 +76,10 @@
             <!-- Selected Groups as Badges -->
             <div class="selected-groups mb-2" *ngIf="selectedGroups.length > 0">
               <span class="badge bg-primary me-2 mb-2 d-inline-flex align-items-center"
-                *ngFor="let groupId of selectedGroups">
-                {{ getGroupName(groupId) }}
+                *ngFor="let group of selectedGroups">
+                {{ group.name }}
                 <button type="button" class="btn-close btn-close-white ms-2"
-                  (click)="$event.stopPropagation(); removeGroup(groupId)" aria-label="Remove"></button>
+                  (click)="$event.stopPropagation(); removeGroup(group.id)" aria-label="Remove"></button>
               </span>
             </div>
 
@@ -150,7 +150,6 @@
   <table *ngIf="!loading && filteredItems?.length">
     <thead>
       <tr>
-        <th>ID</th>
         <th>First Name</th>
         <th>Last Name</th>
         <th>Email</th>
@@ -162,12 +161,13 @@
     </thead>
     <tbody>
       <tr *ngFor="let it of filteredItems; let i = index" [style.background]="i % 2 === 0 ? '#f7f7f7' : '#ffffff'">
-        <td>{{ it.id }}</td>
         <td>{{ it.first_name }}</td>
         <td>{{ it.last_name }}</td>
         <td>{{ it.email }}</td>
         <td>{{ it.mobile }}</td>
-        <td>{{ it.event_types || '-' }}</td>
+        <!-- <td>{{ formatGroups(it.event_notification_groups) }}</td> -->
+        <td>{{ formatEventTypes(it.event_types) }}
+        </td>
         <td style="text-align:center;"><input type="checkbox" [checked]="it.is_active" disabled /></td>
         <td>
           <button type="button" (click)="$event.stopPropagation(); goView(it.id)" class="btn-info">View</button>

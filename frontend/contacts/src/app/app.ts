@@ -3,6 +3,7 @@ import { RouterOutlet, Router, ActivatedRoute, NavigationEnd } from '@angular/ro
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ItemsService } from './items.service';
+import { EventType } from './item.model';
 import { Item } from './item.model';
 import { filter } from 'rxjs/operators';
 
@@ -29,6 +30,8 @@ const DEFAULT_NOTIFICATION_GROUPS: Array<{ id: string; name: string }> = [
 })
 
 export class App implements OnInit {
+
+  
   protected readonly title = signal('contacts');
   items: Item[] = [];
   filteredItems: Item[] = [];
@@ -39,7 +42,11 @@ export class App implements OnInit {
   totalPages = 1;
   totalItems = 0;
   showCreateForm = false;
-  newItem: Partial<Item> = { is_active: true };
+  newItem: Partial<Item> & { event_notification?: 'all' | 'selected' | 'none', eventTypesArray?: string[] } = { 
+    is_active: true,
+    event_notification: 'all',
+    eventTypesArray: []
+  };
   notificationGroup: string = '';
   uniqueFirstNames: string[] = [];
   formError: string | null = null;
@@ -50,7 +57,7 @@ export class App implements OnInit {
   mobileNumber = '';
   
   // Notification groups properties
-  selectedGroups: string[] = [];
+  selectedGroups: Array<{id: string; name: string}> = [];
   groupSearch = '';
   loadingGroups = false;
   filteredGroups: Array<{id: string, name: string, isNew?: boolean}> = [];
@@ -119,29 +126,48 @@ export class App implements OnInit {
   }
 
   filterGroups(): void {
-    if (!this.groupSearch.trim()) {
-      this.filteredGroups = [...this.allGroups];
-      return;
+    const searchTerm = this.groupSearch.trim().toLowerCase();
+    const selectedGroupIds = this.selectedGroups.map(g => g.id);
+
+    if (!searchTerm) {
+      // If no search term, show all groups that aren't selected
+      this.filteredGroups = this.allGroups.filter(
+        group => !selectedGroupIds.includes(group.id)
+      );
+    } else {
+      // Filter groups by search term and exclude already selected ones
+      this.filteredGroups = this.allGroups.filter(group =>
+        group.name.toLowerCase().includes(searchTerm) &&
+        !selectedGroupIds.includes(group.id)
+      );
+
+      // If no groups match, show an option to create a new one
+      if (this.filteredGroups.length === 0 && searchTerm) {
+        this.filteredGroups = [{
+          id: searchTerm.toLowerCase().replace(/\s+/g, '-'),
+          name: searchTerm,
+          isNew: true
+        }];
+      }
     }
-    const searchTerm = this.groupSearch.toLowerCase();
-    this.filteredGroups = this.allGroups.filter(
-      group => group.name.toLowerCase().includes(searchTerm)
-    );
   }
 
-  selectGroup(group: {id: string, name: string}): void {
-    if (!this.selectedGroups.includes(group.id)) {
-      this.selectedGroups = [...this.selectedGroups, group.id];
+  selectGroup(group: {id: string, name: string, isNew?: boolean}): void {
+    if (!this.selectedGroups.some(g => g.id === group.id)) {
+      this.selectedGroups = [...this.selectedGroups, { id: group.id, name: group.name }];
       this.groupSearch = '';
       this.filterGroups();
     }
   }
 
   removeGroup(groupId: string): void {
-    this.selectedGroups = this.selectedGroups.filter(id => id !== groupId);
+    this.selectedGroups = this.selectedGroups.filter(group => group.id !== groupId);
   }
 
-  getGroupName(groupId: string): string {
+  getGroupName(groupId: string | { id: string; name: string }): string {
+    if (typeof groupId === 'object') {
+      return groupId.name;
+    }
     const group = this.allGroups.find(g => g.id === groupId);
     return group ? group.name : groupId;
   }
@@ -170,30 +196,69 @@ export class App implements OnInit {
 
   private createNewGroup(name: string): void {
     const newGroup = {
-      id: `new-${Date.now()}`,
-      name: name,
-      isNew: true
+      id: name.toLowerCase().replace(/\s+/g, '-'),
+      name: name
     };
-    this.allGroups = [...this.allGroups, newGroup];
+    
+    // Add to all groups if it doesn't exist
+    if (!this.allGroups.some(g => g.id === newGroup.id)) {
+      this.allGroups = [...this.allGroups, newGroup];
+      
+      // Persist groups
+      if (isPlatformBrowser(this.platformId)) {
+        try {
+          sessionStorage.setItem('allNotificationGroups', JSON.stringify(this.allGroups));
+        } catch (e) {
+          console.error('Error saving groups to sessionStorage:', e);
+        }
+      }
+    }
+    
+    // Select the group
     this.selectGroup(newGroup);
-    // Persist groups
-    if (isPlatformBrowser(this.platformId)) {
-      try {
-        sessionStorage.setItem('allNotificationGroups', JSON.stringify(this.allGroups));
-      } catch {}
+  }
+
+  // When loading an item, initialize eventTypesArray from event_types
+  private initializeEventTypesArray() {
+    if (this.newItem.event_types && this.newItem.event_types.length > 0) {
+      this.newItem.eventTypesArray = this.newItem.event_types.map(et => et.event_name);
+    } else {
+      this.newItem.eventTypesArray = [];
     }
   }
 
-  updateEventTypes(eventType: string, isChecked: boolean): void {
+  updateEventTypes(eventTypeName: string, isChecked: boolean): void {
     if (!this.newItem.eventTypesArray) {
       this.newItem.eventTypesArray = [];
     }
-    
+
     if (isChecked) {
-      this.newItem.eventTypesArray = [...(this.newItem.eventTypesArray || []), eventType];
+      if (!this.newItem.eventTypesArray.includes(eventTypeName)) {
+        this.newItem.eventTypesArray = [...this.newItem.eventTypesArray, eventTypeName];
+        
+        if (!this.newItem.event_types) {
+          this.newItem.event_types = [];
+        }
+        
+        if (!this.newItem.event_types.some(et => et.event_name === eventTypeName)) {
+          this.newItem.event_types = [
+            ...this.newItem.event_types,
+            { event_name: eventTypeName }
+          ];
+        }
+      }
     } else {
-      this.newItem.eventTypesArray = (this.newItem.eventTypesArray || []).filter(et => et !== eventType);
+      this.newItem.eventTypesArray = this.newItem.eventTypesArray.filter(t => t !== eventTypeName);
+      
+      if (this.newItem.event_types) {
+        this.newItem.event_types = this.newItem.event_types.filter(
+          et => et.event_name !== eventTypeName
+        );
+      }
     }
+    
+    // Trigger change detection
+    this.cd.detectChanges();
   }
 
   async ngOnInit(): Promise<void> {
@@ -231,59 +296,66 @@ export class App implements OnInit {
     this.cd.markForCheck();
   }
 
-  async reload() {
-    this.loading = true;
-    this.cd.markForCheck();
-    console.log('App.reload() started for page', this.currentPage);
-    try {
-      const result = await this.svc.getAll(this.currentPage);
-      this.ngZone.run(() => {
-        this.items = result.items;
-        this.totalItems = result.total;
-        this.totalPages = result.pageCount;
+async reload() {
+  this.loading = true;
+  this.cd.markForCheck();
 
-        // Get unique first names
-        const firstNames = new Set<string>();
-        this.items.forEach((item: Item) => {
-          if (item.first_name) {
-            firstNames.add(item.first_name);
-          }
-        });
-        this.uniqueFirstNames = Array.from(firstNames).sort();
+  console.log('%cApp.reload() started – Page ' + this.currentPage, 
+    'color: #0066cc; font-weight: bold; font-size: 14px;');
 
-        console.log('Loaded items:', this.items, 'Total:', this.totalItems, 'Pages:', this.totalPages);
-        this.applyFilter();
-        this.cd.markForCheck();
-      });
-    } catch (err: any) {
-      console.error('Error loading items:', err);
-      this.loading = false;
+  try {
+    const result = await this.svc.getContacts(this.currentPage);
+
+    this.ngZone.run(() => {
+      this.items = result.items;
+      this.totalItems = result.total;
+      this.totalPages = result.pageCount;
+
+      // Extract unique first names (cleaner way)
+      this.uniqueFirstNames = Array.from(
+        new Set(this.items.map(item => item.first_name).filter(Boolean))
+      ).sort();
+      
+      console.groupEnd();
+
+      // Now filter and display
+      this.applyFilter();
       this.cd.markForCheck();
-    } finally {
-      this.loading = false;
-      this.cd.markForCheck();
-    }
-  }
-
-  applyFilter() {
-    this.filteredItems = this.items.filter(item => {
-      // Filter by search term (search in first_name, last_name, email)
-      const searchLower = this.search.toLowerCase();
-      const matchesSearch = !searchLower ||
-        (item.first_name && item.first_name.toLowerCase().includes(searchLower)) ||
-        (item.last_name && item.last_name.toLowerCase().includes(searchLower)) ||
-        (item.email && item.email.toLowerCase().includes(searchLower));
-
-      // Filter by active status
-      const matchesStatus = this.status === 'all' ||
-        (this.status === 'active' && item.is_active) ||
-        (this.status === 'inactive' && !item.is_active);
-
-      return matchesSearch && matchesStatus;
     });
-    console.log('Filtered items:', this.filteredItems);
+  } catch (err: any) {
+    console.error('%cError loading contacts:', 'color: red; font-weight: bold;', err);
+    this.loading = false;
+    this.cd.markForCheck();
+  } finally {
+    this.loading = false;
     this.cd.markForCheck();
   }
+}
+
+applyFilter() {
+  this.filteredItems = this.items.filter(item => {
+    // Filter by search term (search in first_name, last_name, email)
+    const searchLower = this.search.toLowerCase();
+    const matchesSearch = !searchLower ||
+      (item.first_name && item.first_name.toLowerCase().includes(searchLower)) ||
+      (item.last_name && item.last_name.toLowerCase().includes(searchLower)) ||
+      (item.email && item.email.toLowerCase().includes(searchLower));
+
+    // Filter by active status
+    const matchesStatus = this.status === 'all' ||
+      (this.status === 'active' && item.is_active) ||
+      (this.status === 'inactive' && !item.is_active);
+
+    return matchesSearch && matchesStatus;
+  });
+
+  // Better logging for debugging
+// REPLACE your old broken code with this:
+console.log('%cFiltered Items:', 'color: #0066cc; font-weight: bold; font-size: 14px;');
+console.dir(this.filteredItems, { depth: null, colors: true });
+
+  this.cd.markForCheck();
+}
 
   onFilter() {
     console.log('Filter applied:', { search: this.search, status: this.status });
@@ -328,7 +400,7 @@ export class App implements OnInit {
     this.cd.markForCheck();
 
     try {
-      await this.svc.create(this.newItem);
+      await this.svc.createContact(this.newItem);
       this.showCreateForm = false;
       this.newItem = { is_active: true };
       this.currentPage = 1;
@@ -366,7 +438,7 @@ export class App implements OnInit {
     if (id == null) return;
     if (!confirm('Delete this item?')) return;
     try {
-      await this.svc.delete(id);
+      await this.svc.deleteContact(id);
       this.successMessage = 'Contact deleted successfully';
       setTimeout(() => { this.successMessage = null; this.cd.markForCheck(); }, 4000);
       await this.reload();
@@ -394,6 +466,14 @@ export class App implements OnInit {
       this.currentPage = page;
       this.reload();
     }
+  }
+
+  formatGroups(groups: any[] | undefined): string {
+    return groups?.length ? groups.map(g => g.group_name).join(', ') : '—';
+  }
+
+  formatEventTypes(types: any[] | undefined): string {
+    return types?.length ? types.map(t => t.event_name).join(', ') : '—';
   }
 
   private isLandingPage(): boolean {

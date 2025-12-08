@@ -30,7 +30,7 @@ export class ItemsComponent implements OnInit {
     this.error = null;
     console.log('ItemsComponent.reload() started');
     try {
-      const result = await this.svc.getAll();
+      const result = await this.svc.getContacts();
       this.items = result.items;
       console.log('Loaded items:', this.items);
     } catch (err: any) {
@@ -60,7 +60,7 @@ goView(id: number | undefined): void {
     if (id == null) return;
     if (!confirm('Delete this item?')) return;
     try {
-      await this.svc.delete(id);
+      await this.svc.deleteContact(id);
       await this.reload();
     } catch (err: any) {
       this.error = err.message || String(err);
