@@ -5,6 +5,10 @@ import { Item, EventNotificationGroup, EventType } from './item.model';
 
 const API_BASE = 'http://localhost:8000/api';
 
+export interface BackendValidationError {
+  [key: string]: string[];
+}
+
 export interface PaginatedResponse<T> {
   count: number;
   next: string | null;
@@ -45,6 +49,14 @@ export class ItemsService {
     return this.toFrontendFormat(response);
   }
 
+  private readonly NOTIFICATION_GROUP_MAP: { [key: string]: number } = {
+    'admin': 1,
+    'security': 2,
+    'hr': 3,
+    'it-support': 4,
+    'management': 5,
+    'incident-response': 6
+  };
   private readonly EVENT_CODE_MAP: { [key: string]: number } = {
     '911': 1,
     'Safewalk': 2,
@@ -53,17 +65,23 @@ export class ItemsService {
   };
 
   // Transform frontend payload to backend format
-  private toBackendFormat(frontendData: any): any {
-    return {
-      first_name: frontendData.first_name || '',
-      last_name: frontendData.last_name || '',
-      email: frontendData.email || '',
-      mobile: frontendData.mobile || '',
-      event_notification_groups_ids: frontendData.event_notification_groups?.map((g: any) => g.id) || [],
-      event_types_ids: frontendData.eventTypesArray?.map((type: string) => this.EVENT_CODE_MAP[type] || 0).filter(Boolean) || [],
-      is_active: frontendData.is_active ?? false
-    };
-  }
+private toBackendFormat(frontendData: any): any {
+  // Get all group IDs if 'all' is selected or no selection
+  const shouldUseAllGroups = !frontendData.event_notification || frontendData.event_notification === 'all';
+  const allGroupIds = Object.values(this.NOTIFICATION_GROUP_MAP).filter(id => id !== 0);
+  
+  return {
+    first_name: frontendData.first_name || '',
+    last_name: frontendData.last_name || '',
+    email: frontendData.email || '',
+    mobile: frontendData.mobile || '',
+    event_notification_groups_ids: shouldUseAllGroups 
+      ? allGroupIds 
+      : frontendData.event_notification_groups?.map((type: string) => this.NOTIFICATION_GROUP_MAP[type] || 0).filter(Boolean) || [],
+    event_types_ids: frontendData.eventTypesArray?.map((type: string) => this.EVENT_CODE_MAP[type] || 0).filter(Boolean) || [],
+    is_active: frontendData.is_active ?? false
+  };
+}
 
   // Transform backend payload to frontend format
   private toFrontendFormat(backendData: any): any {
@@ -74,22 +92,45 @@ export class ItemsService {
     };
   }
 
+  private handleError(error: any): never {
+    if (error.error && typeof error.error === 'object') {
+      const errorMessages: string[] = [];
+      Object.entries(error.error).forEach(([field, messages]) => {
+        if (Array.isArray(messages)) {
+          errorMessages.push(`${field}: ${(messages as string[]).join(', ')}`);
+        }
+      });
+      if (errorMessages.length > 0) {
+        throw new Error(errorMessages.join('\n'));
+      }
+    }
+    throw error;
+  }
+
   // Create Contact
   async createContact(contact: any): Promise<Item> {
-    const backendPayload = this.toBackendFormat(contact);
-    const response = await firstValueFrom(
-      this.http.post<Item>(`${API_BASE}/contacts/`, backendPayload)
-    );
-    return this.toFrontendFormat(response);
+    try {
+      const backendPayload = this.toBackendFormat(contact);
+      const response = await firstValueFrom(
+        this.http.post<Item>(`${API_BASE}/contacts/`, backendPayload)
+      );
+      return this.toFrontendFormat(response);
+    } catch (error: any) {
+      return Promise.reject(this.handleError(error));
+    }
   }
 
   // Update Contact (PATCH)
   async updateContact(id: number | string, contact: any): Promise<Item> {
-    const backendPayload = this.toBackendFormat(contact);
-    const response = await firstValueFrom(
-      this.http.patch<Item>(`${API_BASE}/contacts/${id}/`, backendPayload)
-    );
-    return this.toFrontendFormat(response);
+    try {
+      const backendPayload = this.toBackendFormat(contact);
+      const response = await firstValueFrom(
+        this.http.patch<Item>(`${API_BASE}/contacts/${id}/`, backendPayload)
+      );
+      return this.toFrontendFormat(response);
+    } catch (error: any) {
+      return Promise.reject(this.handleError(error));
+    }
   }
 
   // Delete Contact

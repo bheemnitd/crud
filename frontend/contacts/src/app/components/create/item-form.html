@@ -78,27 +78,27 @@
     <div class="form-group">
       <label class="form-label">Event Notification</label>
       <div class="d-flex gap-3">
-        <div class="form-check form-check-inline">
-          <input type="radio" 
-                 id="notifyAll"
-                 name="event_notification"
-                 [value]="'all'"
-                 [(ngModel)]="item.event_notification"
-                 (change)="onNotificationModeChange('all')"
-                 class="form-check-input">
-          <label for="notifyAll" class="form-check-label"> All Organizational App Users</label>
-        </div>
-        <div class="form-check form-check-inline">
-          <input type="radio"
-                 id="notifySelected"
-                 name="event_notification"
-                 [value]="'selected'"
-                 [(ngModel)]="item.event_notification"
-                 (change)="onNotificationModeChange('selected')"
-                 class="form-check-input">
-          <label for="notifySelected" class="form-check-label"> Selection Notification Group</label>
-        </div>
-      </div>
+  <div class="form-check form-check-inline">
+    <input type="radio" 
+           id="notifyAll"
+           name="event_notification"
+           value="all"
+           [(ngModel)]="item.event_notification"
+           (change)="onNotificationModeChange('all')"
+           class="form-check-input">
+    <label for="notifyAll" class="form-check-label">All Organizational App Users</label>
+  </div>
+  <div class="form-check form-check-inline">
+    <input type="radio"
+           id="notifySelected"
+           name="event_notification"   
+           value="selected"
+           [(ngModel)]="item.event_notification"
+           (change)="onNotificationModeChange('selected')"
+           class="form-check-input">
+    <label for="notifySelected" class="form-check-label">Selection Notification Group</label>
+  </div>
+</div>
 
       <div *ngIf="item.event_notification === 'selected'" class="mt-3">
         <div class="selected-groups mb-2" *ngIf="selectedGroups.length > 0">

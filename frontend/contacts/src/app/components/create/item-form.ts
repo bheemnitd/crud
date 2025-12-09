@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { ItemsService } from './items.service';
-import { Item, EventNotificationGroup, EventType } from './item.model';
+import { ItemsService } from '../../items.service';
+import { Item, EventNotificationGroup, EventType } from '../../item.model';
 
 interface EventTypeOption {
   value: string;
@@ -60,9 +60,12 @@ export class ItemFormComponent implements OnInit {
   selectedGroups: Array<{ id: string; name: string }> = [];
   groupSearch = '';
   loadingGroups = false;
+  showDropdown = false;
+
   filteredGroups: Array<{ id: string; name: string; isNew?: boolean }> = [];
   allGroups: Array<{ id: string; name: string }> = [];
 
+  
   private formInitialized = false;
   private readonly emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
@@ -74,7 +77,37 @@ export class ItemFormComponent implements OnInit {
     this.initializeEventTypeOptions();
     this.initializeFromRoute();
   }
+onGroupInputFocus(): void {
+    this.showDropdown = true;
+    this.filterGroups();
+  }
 
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.dropdown-container')) {
+      this.showDropdown = false;
+    }
+  }
+
+  filterGroups(): void {
+    if (!this.groupSearch.trim()) {
+      this.filteredGroups = [...this.allGroups];
+    } else {
+      const searchTerm = this.groupSearch.toLowerCase();
+      this.filteredGroups = this.allGroups.filter(
+        group => group.name.toLowerCase().includes(searchTerm)
+      );
+      
+      if (this.filteredGroups.length === 0 && this.groupSearch.trim()) {
+        this.filteredGroups = [{
+          id: 'new',
+          name: this.groupSearch,
+          isNew: true
+        }];
+      }
+    }
+  }
   async ngOnInit(): Promise<void> {
     await this.loadItemIfNeeded();
     await this.loadNotificationGroups();
@@ -240,32 +273,32 @@ async loadNotificationGroups(): Promise<void> {
     }
   }
 
-  filterGroups(): void {
-    const searchTerm = this.groupSearch.trim().toLowerCase();
-    const selectedGroupIds = this.selectedGroups.map(g => g.id);
+  // filterGroups(): void {
+  //   const searchTerm = this.groupSearch.trim().toLowerCase();
+  //   const selectedGroupIds = this.selectedGroups.map(g => g.id);
 
-    if (!searchTerm) {
-      // If search is empty, show all groups that aren't already selected
-      this.filteredGroups = this.allGroups.filter(
-        group => !selectedGroupIds.includes(group.id)
-      );
-    } else {
-      // Filter groups by search term and exclude already selected ones
-      this.filteredGroups = this.allGroups.filter(group =>
-        group.name.toLowerCase().includes(searchTerm) &&
-        !selectedGroupIds.includes(group.id)
-      );
+  //   if (!searchTerm) {
+  //     // If search is empty, show all groups that aren't already selected
+  //     this.filteredGroups = this.allGroups.filter(
+  //       group => !selectedGroupIds.includes(group.id)
+  //     );
+  //   } else {
+  //     // Filter groups by search term and exclude already selected ones
+  //     this.filteredGroups = this.allGroups.filter(group =>
+  //       group.name.toLowerCase().includes(searchTerm) &&
+  //       !selectedGroupIds.includes(group.id)
+  //     );
 
-      // If no groups match and the search term is not empty, show an option to create a new group
-      if (this.filteredGroups.length === 0 && searchTerm) {
-        this.filteredGroups = [{
-          id: searchTerm.toLowerCase().replace(/\s+/g, '-'),
-          name: searchTerm,
-          isNew: true
-        }];
-      }
-    }
-  }
+  //     // If no groups match and the search term is not empty, show an option to create a new group
+  //     if (this.filteredGroups.length === 0 && searchTerm) {
+  //       this.filteredGroups = [{
+  //         id: searchTerm.toLowerCase().replace(/\s+/g, '-'),
+  //         name: searchTerm,
+  //         isNew: true
+  //       }];
+  //     }
+  //   }
+  // }
 
   selectGroup(group: { id: string; name: string; isNew?: boolean }): void {
     if (!this.selectedGroups.some(g => g.id === group.id)) {
