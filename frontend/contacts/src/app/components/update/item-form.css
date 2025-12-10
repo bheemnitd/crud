@@ -423,3 +423,50 @@ h3 {
   align-items: center;
   gap: 6px;
 }
+.multi-select-wrapper {
+  position: relative;
+}
+
+.multi-select-input {
+  min-height: 56px;
+  border: 1.5px solid #ced4da !important;
+  border-radius: 8px;
+  background: white;
+  cursor: text;
+  transition: all 0.2s ease;
+}
+
+.multi-select-input.focused {
+  border-color: #0d6efd !important;
+  box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.15);
+  outline: none;
+}
+
+.multi-select-input .badge {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.multi-select-input input {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.multi-select-input input::placeholder {
+  color: #6c757d;
+  opacity: 0.8;
+}
+
+.dropdown-menu.show {
+  display: block;
+}
+
+.dropdown-item {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #0d6efd;
+  color: white;
+}

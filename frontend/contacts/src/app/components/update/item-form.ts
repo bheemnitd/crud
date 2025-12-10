@@ -432,10 +432,243 @@
 //     return group.id;
 //   }
 // }
-import { Component, OnInit, HostListener } from '@angular/core';
+
+
+
+
+
+
+
+
+
+
+// import { Component, OnInit, HostListener } from '@angular/core';
+// import { CommonModule } from '@angular/common';
+// import { FormsModule } from '@angular/forms';
+// import { Router, RouterModule } from '@angular/router';
+// import { ItemsService } from '../../items.service';
+// import { Item, EventType } from '../../item.model';
+
+// interface EventTypeOption {
+//   value: string;
+//   label: string;
+//   selected: boolean;
+// }
+
+// const DEFAULT_NOTIFICATION_GROUPS: Array<{ id: string; name: string }> = [
+//   { id: 'admins', name: 'Admins' },
+//   { id: 'security', name: 'Security' },
+//   { id: 'hr', name: 'HR' },
+//   { id: 'it-support', name: 'IT Support' },
+//   { id: 'management', name: 'Management' },
+//   { id: 'incident-response', name: 'Incident Response' }
+// ];
+
+// const EVENT_TYPE_OPTIONS: Omit<EventTypeOption, 'selected'>[] = [
+//   { value: '911', label: '911' },
+//   { value: 'Sos', label: 'Sos' },
+//   { value: 'Timer', label: 'Timer' },
+//   { value: 'Safewalk', label: 'Safewalk' }
+// ];
+
+// @Component({
+//   selector: 'app-item-form',
+//   standalone: true,
+//   imports: [CommonModule, FormsModule, RouterModule],
+//   templateUrl: './item-form.html',
+//   styleUrls: ['./item-form.css']
+// })
+// export class ItemFormComponent implements OnInit {
+//   item: Partial<Item> & { event_notification?: 'all' | 'selected' } = {
+//     first_name: '',
+//     last_name: '',
+//     email: '',
+//     mobile: '',
+//     event_types: [],
+//     is_active: true,
+//     event_notification: 'all',
+//     event_notification_groups: []
+//   };
+
+//   eventTypeOptions: EventTypeOption[] = [];
+//   saving = false;
+//   loading = false;
+//   success = false;
+//   loadingGroups = false;
+//   error: string | null = null;
+//   formDirty = false;
+
+//   selectedGroups: Array<{ id: string; name: string }> = [];
+//   groupSearch = '';
+//   filteredGroups: Array<{ id: string; name: string; isNew?: boolean }> = [];
+//   allGroups: Array<{ id: string; name: string }> = [];
+
+//   private readonly emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+//   constructor(
+//     private itemsService: ItemsService,
+//     private router: Router
+//   ) {
+//     this.initializeEventTypeOptions();
+//   }
+
+//   ngOnInit(): void {
+//     this.loadNotificationGroups();
+//   }
+
+//   private initializeEventTypeOptions(): void {
+//     this.eventTypeOptions = EVENT_TYPE_OPTIONS.map(opt => ({
+//       ...opt,
+//       selected: false
+//     }));
+//   }
+
+//   onEventTypeChange(eventType: string, isChecked: boolean): void {
+//     this.eventTypeOptions = this.eventTypeOptions.map(opt => ({
+//       ...opt,
+//       selected: opt.value === eventType ? isChecked : opt.selected
+//     }));
+//     this.markFormDirty();
+//   }
+
+//   onNotificationModeChange(mode: 'all' | 'selected'): void {
+//     this.item.event_notification = mode;
+//     this.markFormDirty();
+//     if (mode === 'selected') {
+//       this.filterGroups();
+//     } else {
+//       this.groupSearch = '';
+//     }
+//   }
+
+//   filterGroups(): void {
+//     const term = this.groupSearch.trim().toLowerCase();
+//     if (!term) {
+//       this.filteredGroups = this.allGroups.filter(g =>
+//         !this.selectedGroups.some(sg => sg.id === g.id)
+//       );
+//     } else {
+//       this.filteredGroups = this.allGroups.filter(g =>
+//         g.name.toLowerCase().includes(term) &&
+//         !this.selectedGroups.some(sg => sg.id === g.id)
+//       );
+
+//       if (this.filteredGroups.length === 0 && term) {
+//         this.filteredGroups = [{
+//           id: term.replace(/\s+/g, '-').toLowerCase(),
+//           name: this.groupSearch,
+//           isNew: true
+//         }];
+//       }
+//     }
+//   }
+
+//   selectGroup(group: { id: string; name: string; isNew?: boolean }): void {
+//     if (this.selectedGroups.some(g => g.id === group.id)) return;
+
+//     this.selectedGroups = [...this.selectedGroups, { id: group.id, name: group.name }];
+
+//     if (group.isNew) {
+//       this.allGroups = [...this.allGroups, { id: group.id, name: group.name }];
+//       try {
+//         sessionStorage.setItem('allNotificationGroups', JSON.stringify(this.allGroups));
+//       } catch { }
+//     }
+
+//     this.groupSearch = '';
+//     this.filterGroups();
+//   }
+
+//   removeGroup(groupId: string): void {
+//     this.selectedGroups = this.selectedGroups.filter(g => g.id !== groupId);
+//   }
+
+//   async save(): Promise<void> {
+//     if (this.saving) return;
+
+//     this.saving = true;
+//     this.error = null;
+
+//     try {
+//       // Build event_types from checkboxes
+//       this.item.event_types = this.eventTypeOptions
+//         .filter(opt => opt.selected)
+//         .map(opt => ({ event_name: opt.value } as EventType));
+
+//       // Map selected groups to backend format
+
+//       this.item.event_notification_groups = this.selectedGroups.map(g => ({
+//         id: parseInt(g.id, 10),  // Convert string ID to number
+//         group_name: g.name
+//       }));
+//       await this.itemsService.createContact(this.item as Partial<Item>);
+//       this.success = true;
+//       setTimeout(() => this.router.navigate(['/items']), 1500);
+//     } catch (err: any) {
+//       this.error = err.message || 'Failed to create contact';
+//       console.error('Save error:', err);
+//     } finally {
+//       this.saving = false;
+//     }
+//   }
+
+//   markFormDirty(): void {
+//     this.formDirty = true;
+//   }
+
+//   isValidEmail(email: string): boolean {
+//     return email ? this.emailPattern.test(email) : false;
+//   }
+
+//   onCancel(): void {
+//     this.router.navigate(['/items']);
+//   }
+
+//   private async loadNotificationGroups(): Promise<void> {
+//     this.allGroups = [...DEFAULT_NOTIFICATION_GROUPS];
+
+//     try {
+//       const stored = sessionStorage.getItem('allNotificationGroups');
+//       if (stored) {
+//         const parsed = JSON.parse(stored);
+//         parsed.forEach((g: any) => {
+//           if (!this.allGroups.some(x => x.id === g.id)) {
+//             this.allGroups.push(g);
+//           }
+//         });
+//       }
+//     } catch (e) {
+//       console.warn('Failed to load stored groups', e);
+//     }
+
+//     this.filterGroups();
+//   }
+
+//   trackByGroupId(index: number, group: { id: string }): string {
+//     return group.id;
+//   }
+
+//   onEnterKey(event: Event): void {
+//     event.preventDefault();
+//     if (this.groupSearch.trim()) {
+//       this.createNewGroup(this.groupSearch.trim());
+//     }
+//   }
+
+//   private createNewGroup(name: string): void {
+//     const newGroup = {
+//       id: name.toLowerCase().replace(/\s+/g, '-'),
+//       name: name.trim()
+//     };
+//     this.selectGroup({ ...newGroup, isNew: true });
+//   }
+// }
+
+import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { FormsModule, NgForm } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { ItemsService } from '../../items.service';
 import { Item, EventType } from '../../item.model';
 
@@ -445,13 +678,19 @@ interface EventTypeOption {
   selected: boolean;
 }
 
-const DEFAULT_NOTIFICATION_GROUPS: Array<{ id: string; name: string }> = [
-  { id: 'admins', name: 'Admins' },
-  { id: 'security', name: 'Security' },
-  { id: 'hr', name: 'HR' },
-  { id: 'it-support', name: 'IT Support' },
-  { id: 'management', name: 'Management' },
-  { id: 'incident-response', name: 'Incident Response' }
+interface Group {
+  id: string;
+  name: string;
+  isNew?: boolean;
+}
+
+const DEFAULT_GROUPS: Group[] = [
+  { id: '1', name: 'Admins' },
+  { id: '2', name: 'Security' },
+  { id: '3', name: 'HR' },
+  { id: '4', name: 'IT Support' },
+  { id: '5', name: 'Management' },
+  { id: '6', name: 'Incident Response' }
 ];
 
 const EVENT_TYPE_OPTIONS: Omit<EventTypeOption, 'selected'>[] = [
@@ -462,48 +701,125 @@ const EVENT_TYPE_OPTIONS: Omit<EventTypeOption, 'selected'>[] = [
 ];
 
 @Component({
-  selector: 'app-item-form',
+  selector: 'app-item-update',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './item-form.html',
   styleUrls: ['./item-form.css']
 })
-export class ItemFormComponent implements OnInit {
-  item: Partial<Item> & { event_notification?: 'all' | 'selected' } = {
-    first_name: '',
-    last_name: '',
-    email: '',
-    mobile: '',
-    event_types: [],
-    is_active: true,
-    event_notification: 'all',
-    event_notification_groups: []
+export class ItemUpdateComponent implements OnInit {
+  @ViewChild('groupInput') groupInput!: ElementRef<HTMLInputElement>;
+  hoveredGroup: string | null = null;  // <-- Add this line
+
+  item: Partial<Item> & { event_notification: 'all' | 'selected' | 'none' } = {
+    first_name: '', last_name: '', email: '', mobile: '',
+    event_notification: 'all', is_active: true, event_types: []
   };
 
   eventTypeOptions: EventTypeOption[] = [];
   saving = false;
-  loading = false;
+  loading = true;
   success = false;
-  loadingGroups = false;
   error: string | null = null;
   formDirty = false;
-
-  selectedGroups: Array<{ id: string; name: string }> = [];
-  groupSearch = '';
-  filteredGroups: Array<{ id: string; name: string; isNew?: boolean }> = [];
-  allGroups: Array<{ id: string; name: string }> = [];
-
   private readonly emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+  markFormDirty(): void {
+    this.formDirty = true;
+  }
+
+  isValidEmail(email: string): boolean {
+    return this.emailPattern.test(email || '');
+  }
+
+  // Multi-select groups (tags inside input)
+  selectedGroups: Group[] = [];
+  groupSearch = '';
+  filteredGroups: Group[] = [];
+  allGroups: Group[] = [...DEFAULT_GROUPS];
+  showDropdown = false;
+  inputFocused = false;
+
+  private itemId: string | null = null;
 
   constructor(
     private itemsService: ItemsService,
+    private route: ActivatedRoute,
     private router: Router
   ) {
     this.initializeEventTypeOptions();
   }
 
-  ngOnInit(): void {
-    this.loadNotificationGroups();
+ngOnInit(): void {
+  this.itemId = this.route.snapshot.paramMap.get('id');
+  if (!this.itemId) {
+    this.error = 'Invalid contact ID';
+    this.loading = false;
+    return;
+  }
+
+  this.loadPersistedGroups();
+  this.loadContact();
+}
+
+  private loadPersistedGroups(): void {
+    try {
+      const stored = sessionStorage.getItem('allNotificationGroups');
+      if (stored) {
+        const parsed: Group[] = JSON.parse(stored);
+        parsed.forEach(g => {
+          if (!this.allGroups.some(x => x.id === g.id)) {
+            this.allGroups.push(g);
+          }
+        });
+      }
+    } catch (e) {
+      console.warn('Failed to load stored groups', e);
+    }
+  }
+
+  private async loadContact(): Promise<void> {
+    this.loading = true;
+    try {
+      // Convert Observable to Promise and await the actual data
+      const data = await firstValueFrom(
+        this.itemsService.getContact(this.itemId!)
+      );
+
+      // Now data is the actual Item, not an Observable
+      this.item = { 
+        ...data, 
+        event_notification: data.event_notification || 'all' 
+      };
+
+      // Populate selected groups
+      if (data.event_notification === 'selected' && data.event_notification_groups) {
+        this.selectedGroups = data.event_notification_groups
+          .filter((g: any) => g && g.id && g.group_name)
+          .map((g: any) => ({
+            id: String(g.id),
+            name: g.group_name
+          }));
+      } else {
+        this.selectedGroups = [];
+      }
+
+      // Update event type checkboxes
+      if (data.event_types) {
+        const selectedTypes = data.event_types.map((et: any) => et.event_name);
+        this.eventTypeOptions = this.eventTypeOptions.map(option => ({
+          ...option,
+          selected: selectedTypes.includes(option.value)
+        }));
+      }
+
+      this.filterGroups();
+    } catch (error) {
+      this.error = 'Failed to load contact';
+      console.error(error);
+    } finally {
+      this.loading = false;
+    }
   }
 
   private initializeEventTypeOptions(): void {
@@ -513,47 +829,52 @@ export class ItemFormComponent implements OnInit {
     }));
   }
 
-  onEventTypeChange(eventType: string, isChecked: boolean): void {
-    this.eventTypeOptions = this.eventTypeOptions.map(opt => ({
-      ...opt,
-      selected: opt.value === eventType ? isChecked : opt.selected
-    }));
-    this.markFormDirty();
+  // === Multi-Select Group Logic (Same as Create) ===
+  focusInput(): void {
+    this.groupInput.nativeElement.focus();
   }
 
-  onNotificationModeChange(mode: 'all' | 'selected'): void {
-    this.item.event_notification = mode;
-    this.markFormDirty();
-    if (mode === 'selected') {
-      this.filterGroups();
-    } else {
-      this.groupSearch = '';
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.multi-select-wrapper')) {
+      this.showDropdown = false;
     }
+  }
+
+  onGroupInputFocus(): void {
+    this.inputFocused = true;
+    this.showDropdown = true;
+    this.filterGroups();
+  }
+
+  onGroupInputBlur(): void {
+    this.inputFocused = false;
+    setTimeout(() => {
+      if (!this.inputFocused) this.showDropdown = false;
+    }, 200);
   }
 
   filterGroups(): void {
     const term = this.groupSearch.trim().toLowerCase();
+    const selectedIds = this.selectedGroups.map(g => g.id);
+
     if (!term) {
-      this.filteredGroups = this.allGroups.filter(g =>
-        !this.selectedGroups.some(sg => sg.id === g.id)
-      );
+      this.filteredGroups = this.allGroups.filter(g => !selectedIds.includes(g.id));
     } else {
-      this.filteredGroups = this.allGroups.filter(g =>
-        g.name.toLowerCase().includes(term) &&
-        !this.selectedGroups.some(sg => sg.id === g.id)
+      const matches = this.allGroups.filter(g =>
+        g.name.toLowerCase().includes(term) && !selectedIds.includes(g.id)
       );
 
-      if (this.filteredGroups.length === 0 && term) {
-        this.filteredGroups = [{
-          id: term.replace(/\s+/g, '-').toLowerCase(),
-          name: this.groupSearch,
-          isNew: true
-        }];
-      }
+      this.filteredGroups = matches.length > 0 ? matches : [{
+        id: term.replace(/\s+/g, '-'),
+        name: this.groupSearch.trim(),
+        isNew: true
+      }];
     }
   }
 
-  selectGroup(group: { id: string; name: string; isNew?: boolean }): void {
+  selectGroup(group: Group): void {
     if (this.selectedGroups.some(g => g.id === group.id)) return;
 
     this.selectedGroups = [...this.selectedGroups, { id: group.id, name: group.name }];
@@ -562,15 +883,46 @@ export class ItemFormComponent implements OnInit {
       this.allGroups = [...this.allGroups, { id: group.id, name: group.name }];
       try {
         sessionStorage.setItem('allNotificationGroups', JSON.stringify(this.allGroups));
-      } catch { }
+      } catch {}
     }
 
     this.groupSearch = '';
     this.filterGroups();
+    this.groupInput.nativeElement.focus();
   }
 
-  removeGroup(groupId: string): void {
-    this.selectedGroups = this.selectedGroups.filter(g => g.id !== groupId);
+  removeGroup(id: string): void {
+    this.selectedGroups = this.selectedGroups.filter(g => g.id !== id);
+    this.filterGroups();
+  }
+
+  onBackspace(): void {
+    if (!this.groupSearch && this.selectedGroups.length > 0) {
+      this.removeGroup(this.selectedGroups[this.selectedGroups.length - 1].id);
+    }
+  }
+
+  onEnterKey(event: Event): void {
+    event.preventDefault();
+    if (this.filteredGroups.length > 0) {
+      this.selectGroup(this.filteredGroups[0]);
+    }
+  }
+
+  onNotificationModeChange(mode: 'all' | 'selected' | 'none'): void {
+    this.item.event_notification = mode;
+    if (mode !== 'selected') {
+      this.selectedGroups = [];
+    }
+    this.markFormDirty();
+  }
+
+  onEventTypeChange(value: string, isChecked: boolean): void {
+    this.eventTypeOptions = this.eventTypeOptions.map(opt => ({
+      ...opt,
+      selected: opt.value === value ? isChecked : opt.selected
+    }));
+    this.markFormDirty();
   }
 
   async save(): Promise<void> {
@@ -580,76 +932,31 @@ export class ItemFormComponent implements OnInit {
     this.error = null;
 
     try {
-      // Build event_types from checkboxes
+      // Build event_types
       this.item.event_types = this.eventTypeOptions
         .filter(opt => opt.selected)
         .map(opt => ({ event_name: opt.value } as EventType));
 
-      // Map selected groups to backend format
-
+      // Build groups
       this.item.event_notification_groups = this.selectedGroups.map(g => ({
-        id: parseInt(g.id, 10),  // Convert string ID to number
+        id: parseInt(g.id, 10),
         group_name: g.name
       }));
-      await this.itemsService.createContact(this.item as Partial<Item>);
+
+      await this.itemsService.updateContact(this.itemId!, this.item);
       this.success = true;
       setTimeout(() => this.router.navigate(['/items']), 1500);
     } catch (err: any) {
-      this.error = err.message || 'Failed to create contact';
-      console.error('Save error:', err);
+      this.error = err.message || 'Failed to update contact';
+      console.error(err);
     } finally {
       this.saving = false;
     }
-  }
-
-  markFormDirty(): void {
-    this.formDirty = true;
-  }
-
-  isValidEmail(email: string): boolean {
-    return email ? this.emailPattern.test(email) : false;
   }
 
   onCancel(): void {
     this.router.navigate(['/items']);
   }
 
-  private async loadNotificationGroups(): Promise<void> {
-    this.allGroups = [...DEFAULT_NOTIFICATION_GROUPS];
-
-    try {
-      const stored = sessionStorage.getItem('allNotificationGroups');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        parsed.forEach((g: any) => {
-          if (!this.allGroups.some(x => x.id === g.id)) {
-            this.allGroups.push(g);
-          }
-        });
-      }
-    } catch (e) {
-      console.warn('Failed to load stored groups', e);
-    }
-
-    this.filterGroups();
-  }
-
-  trackByGroupId(index: number, group: { id: string }): string {
-    return group.id;
-  }
-
-  onEnterKey(event: Event): void {
-    event.preventDefault();
-    if (this.groupSearch.trim()) {
-      this.createNewGroup(this.groupSearch.trim());
-    }
-  }
-
-  private createNewGroup(name: string): void {
-    const newGroup = {
-      id: name.toLowerCase().replace(/\s+/g, '-'),
-      name: name.trim()
-    };
-    this.selectGroup({ ...newGroup, isNew: true });
-  }
+  trackByGroupId = (_: number, group: Group) => group.id;
 }

@@ -55,56 +55,99 @@
       <input id="mobile" name="mobile" type="tel" [(ngModel)]="item.mobile" class="form-control"
         placeholder="Enter mobile number" (input)="markFormDirty()">
     </div>
-    <!-- Event Notification Section -->
-    <div class="form-group">
-      <label class="form-label">Event Notification</label>
-      <div class="d-flex gap-3">
-        <div class="form-check form-check-inline">
-          <input type="radio" id="notifyAll" [value]="'all'" [name]="'event_notification'"
-            [ngModel]="item.event_notification"
-            (ngModelChange)="item.event_notification = $event; onNotificationModeChange($event)"
-            class="form-check-input">
-          <label for="notifyAll" class="form-check-label">All Users</label>
-        </div>
+<!-- Event Notification Section - FULLY UPGRADED -->
+<div class="form-group">
+  <label class="form-label">Event Notification</label>
+  <div class="d-flex gap-3">
+    <div class="form-check form-check-inline">
+      <input type="radio" 
+             id="notifyAll" 
+             [value]="'all'" 
+             name="event_notification"
+             [(ngModel)]="item.event_notification"
+             (ngModelChange)="onNotificationModeChange('all')"
+             class="form-check-input">
+      <label for="notifyAll" class="form-check-label">All Users</label>
+    </div>
 
-        <div class="form-check form-check-inline">
-          <input type="radio" id="notifySelected" [value]="'selected'" [name]="'event_notification'"
-            [ngModel]="item.event_notification"
-            (ngModelChange)="item.event_notification = $event; onNotificationModeChange($event)"
-            class="form-check-input">
-          <label for="notifySelected" class="form-check-label">Selected Groups</label>
-        </div>
+    <div class="form-check form-check-inline">
+      <input type="radio" 
+             id="notifySelected" 
+             [value]="'selected'" 
+             name="event_notification"
+             [(ngModel)]="item.event_notification"
+             (ngModelChange)="onNotificationModeChange('selected')"
+             class="form-check-input">
+      <label for="notifySelected" class="form-check-label">Selected Groups</label>
+    </div>
+  </div>
+
+  <!-- MODERN TAGS-INSIDE-INPUT MULTI-SELECT -->
+  <div *ngIf="item.event_notification === 'selected'" class="mt-3">
+    <div class="multi-select-wrapper position-relative">
+      <!-- Clickable input area with tags inside -->
+      <div class="multi-select-input form-control d-flex flex-wrap align-items-center gap-2 p-2"
+           [class.focused]="inputFocused"
+           (click)="focusInput()"
+           tabindex="0"
+           role="combobox"
+           aria-haspopup="listbox"
+           [attr.aria-expanded]="showDropdown">
+
+        <!-- Selected Tags -->
+        <span class="badge bg-primary text-white d-inline-flex align-items-center rounded-pill px-3 py-2 me-1"
+              *ngFor="let group of selectedGroups; trackBy: trackByGroupId">
+          {{ group.name }}
+          <button type="button" 
+                  class="btn-close btn-close-white ms-2" 
+                  (click)="removeGroup(group.id); $event.stopPropagation()"
+                  aria-label="Remove {{ group.name }}"></button>
+        </span>
+
+        <!-- Hidden search input (grows dynamically) -->
+        <input #groupInput
+               type="text"
+               [(ngModel)]="groupSearch"
+               [ngModelOptions]="{standalone: true}"
+               (input)="filterGroups()"
+               (focus)="onGroupInputFocus()"
+               (blur)="onGroupInputBlur()"
+               (keydown.enter)="onEnterKey($event)"
+               (keydown.backspace)="onBackspace()"
+               placeholder="{{ selectedGroups.length === 0 ? 'Type to search or add groups...' : '' }}"
+               class="border-0 outline-0 bg-transparent flex-grow-1"
+               style="min-width: 200px; padding: 0.375rem 0;"
+               autocomplete="off"
+               aria-autocomplete="list"
+               [attr.aria-controls]="'group-dropdown'"
+               [attr.aria-activedescendant]="filteredGroups.length > 0 ? 'group-' + filteredGroups[0].id : null">
       </div>
 
-      <div *ngIf="item.event_notification === 'selected'" class="mt-3">
-        <div class="selected-groups mb-2" *ngIf="selectedGroups.length > 0">
-          <span class="badge bg-primary me-2 mb-2 d-inline-flex align-items-center"
-            *ngFor="let group of selectedGroups; trackBy: trackByGroupId">
-            {{ group.name }}
-            <button type="button" class="btn-close btn-close-white ms-2" (click)="removeGroup(group.id)"
-              aria-label="Remove"></button>
-          </span>
-        </div>
+      <!-- Dropdown Menu -->
+      <div id="group-dropdown"
+           class="dropdown-menu w-100 shadow-lg border-0 mt-1"
+           [class.show]="showDropdown"
+           style="max-height: 240px; overflow-y: auto; border-radius: 8px; z-index: 1050;">
+        
+        <a href="javascript:void(0)"
+           class="dropdown-item d-flex align-items-center justify-content-between py-2 px-3"
+           *ngFor="let group of filteredGroups; let i = index"
+           [id]="'group-' + group.id"
+           (mousedown)="selectGroup(group); $event.preventDefault()"
+           role="option"
+           [attr.aria-selected]="false">
+          <span>{{ group.name }}</span>
+          <small *ngIf="group.isNew" class="badge bg-success ms-2">New</small>
+        </a>
 
-        <div class="position-relative">
-          <input type="text" class="form-control" [(ngModel)]="groupSearch" [ngModelOptions]="{standalone: true}"
-            (input)="filterGroups()" (keyup.enter)="onEnterKey($event)" (focus)="filterGroups()"
-            placeholder="Search and select groups..." [disabled]="loadingGroups" autocomplete="off">
-
-          <div class="dropdown-menu w-100 position-absolute" [class.show]="filteredGroups.length > 0"
-            style="max-height: 200px; overflow-y: auto; z-index: 1000;">
-            <a class="dropdown-item d-flex align-items-center justify-content-between"
-              *ngFor="let group of filteredGroups" (click)="selectGroup(group)" style="cursor: pointer;">
-              <span>{{ group.name }}</span>
-              <span *ngIf="group.isNew" class="badge bg-info">New</span>
-            </a>
-            <div *ngIf="filteredGroups.length === 0 && groupSearch" class="dropdown-item text-muted">
-              No groups found. Press Enter to create "{{ groupSearch }}"
-            </div>
-          </div>
+        <div class="dropdown-item text-muted text-center py-2"
+             *ngIf="groupSearch && filteredGroups.length === 0">
+          Press Enter to create "{{ groupSearch }}"
         </div>
       </div>
     </div>
+  </div>
+</div>
 
     <!-- Event Types Section -->
     <div class="form-group">

@@ -27,7 +27,7 @@ export const routes: Routes = [
       },
       {
         path: ':id/edit',
-        loadComponent: () => import('./components/update/item-form').then(m => m.ItemFormComponent),
+        loadComponent: () => import('./components/update/item-form').then(m => m.ItemUpdateComponent),
         resolve: { item: ItemResolver },
         title: 'Edit Contact'
       }

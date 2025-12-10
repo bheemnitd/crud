@@ -61,10 +61,10 @@ export class ItemsService {
     'incident-response': 6
   };
   private readonly EVENT_CODE_MAP: { [key: string]: number } = {
-    '911': 1,
-    'Safewalk': 2,
-    'Sos': 3,
-    'Timer': 4,
+    'Sos': 1,
+    '911': 2,
+    'Timer': 3,
+    'Safwalk': 4,
   };
 
   // Transform frontend payload to backend format

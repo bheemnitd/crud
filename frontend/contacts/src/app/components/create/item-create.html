@@ -112,7 +112,7 @@
                  [(ngModel)]="groupSearch"
                  [ngModelOptions]="{standalone: true}"
                  (input)="filterGroups()"
-                 (keyup.enter)="onEnterKey()"
+                 (keyup.enter)="onEnterKey($event)"
                  (focus)="filterGroups()"
                  placeholder="Search and select groups..."
                  [disabled]="loadingGroups">
@@ -124,8 +124,8 @@
                *ngFor="let group of filteredGroups"
                (click)="selectGroup(group); $event.preventDefault()"
                href="#"
-               [class.active]="group === hoveredGroup"
-               (mouseover)="hoveredGroup = group"
+               [class.active]="hoveredGroup === group.id"
+               (mouseover)="hoveredGroup = group.id"
                (mouseout)="hoveredGroup = null">
               {{ group.name }}
               <span *ngIf="group.isNew" class="badge bg-info">New</span>

@@ -384,6 +384,8 @@ const DEFAULT_GROUPS: Group[] = [
 })
 export class ItemCreateComponent implements OnInit {
   @ViewChild('groupInput') groupInput!: ElementRef<HTMLInputElement>;
+  hoveredGroup: string | null = null;  // Track hovered group ID
+  loadingGroups = false;  // Track loading state for groups
 
   private readonly eventTypeMap: { [key: string]: number } = {
     'Sos': 1, '911': 2, 'Timer': 3, 'Safewalk': 4
@@ -397,6 +399,17 @@ export class ItemCreateComponent implements OnInit {
   private eventTypeIds: number[] = [];
 
   formSaving = false;
+
+  // Method to create a new group from user input
+  private createNewGroup(name: string): void {
+    const newGroup = {
+      id: name.toLowerCase().replace(/\s+/g, '-'),
+      name: name.trim(),
+      isNew: true
+    };
+    this.selectGroup(newGroup);
+  }
+
   formError = '';
   successMessage = '';
 
@@ -521,6 +534,8 @@ export class ItemCreateComponent implements OnInit {
     event.preventDefault();
     if (this.filteredGroups.length > 0) {
       this.selectGroup(this.filteredGroups[0]);
+    } else if (this.groupSearch.trim()) {
+      this.createNewGroup(this.groupSearch.trim());
     }
   }
 
@@ -569,19 +584,53 @@ export class ItemCreateComponent implements OnInit {
 
     this.formSaving = true;
     this.formError = '';
+    this.successMessage = '';
 
-this.contactService.createContact(payload)
-  .then((res) => {
-    if (res.success) {
-      this.successMessage = 'Contact created successfully!';
-      this.resetForm(form);
-      setTimeout(() => this.router.navigate(['/items']), 1500);
-    } else {
-      this.setError(res.error || 'Failed to create contact');
-    }
-  })
-  .catch(() => this.setError('Server error'))
-  .finally(() => this.formSaving = false);
+    this.contactService.createContact(payload)
+      .then((response) => {
+        if (response.success) {
+          this.successMessage = 'Contact created successfully!';
+          this.resetForm(form);
+          setTimeout(() => this.router.navigate(['/items']), 1500);
+        } else {
+          // Handle API validation errors
+          if (response.error) {
+            if (typeof response.error === 'object') {
+              // Handle object-style errors like {"email": ["Contact with this email already exists."]}
+              const errorMessages = [];
+              for (const [field, messages] of Object.entries(response.error)) {
+                if (Array.isArray(messages)) {
+                  errorMessages.push(...messages);
+                } else {
+                  errorMessages.push(`${field}: ${messages}`);
+                }
+              }
+              this.setError(errorMessages.join(' '));
+            } else {
+              // Handle string error messages
+              this.setError(response.error);
+            }
+          } else {
+            this.setError('Failed to create contact');
+          }
+        }
+      })
+      .catch((error) => {
+        console.error('API Error:', error);
+        if (error.error) {
+          // Handle HTTP error responses
+          if (error.error.email) {
+            this.setError(error.error.email[0]);
+          } else if (error.error.non_field_errors) {
+            this.setError(error.error.non_field_errors[0]);
+          } else {
+            this.setError('An error occurred while saving the contact');
+          }
+        } else {
+          this.setError('Failed to connect to the server. Please try again.');
+        }
+      })
+      .finally(() => this.formSaving = false);
   }
 
   private setError(msg: string): void {
