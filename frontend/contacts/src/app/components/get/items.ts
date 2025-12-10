@@ -41,7 +41,7 @@ export class ItemsComponent implements OnInit {
     try {
       const result = await this.itemsService.getContacts(this.currentPage);
       this.items = result.items;
-      this.filteredItems = [...this.items];
+      this.filteredItems = this.items;
       this.totalItems = result.total;
       this.totalPages = Math.ceil(this.totalItems / 10);
       this.applyFilters();
@@ -111,7 +111,6 @@ export class ItemsComponent implements OnInit {
     this.successMessage = message;
     setTimeout(() => {
       this.successMessage = null;
-      this.cdr.detectChanges();
     }, 3000);
   }
 
@@ -119,7 +118,6 @@ export class ItemsComponent implements OnInit {
     this.error = message;
     setTimeout(() => {
       this.error = null;
-      this.cdr.detectChanges();
     }, 5000);
   }
 

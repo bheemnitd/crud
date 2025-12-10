@@ -1,9 +1,14 @@
 <div class="container">
-  <div *ngIf="loading">Loading...</div>
-<div *ngIf="error" class="error">{{ error }}</div>
-<div *ngIf="!loading && !error">
-  <div *ngIf="item" class="detail-item">
+  <!-- Loading state -->
+  <div *ngIf="loading" class="loading">Loading contact details...</div>
+
+  <!-- Error state -->
+  <div *ngIf="error && !loading" class="error">{{ error }}</div>
+
+  <!-- Success state - ONLY show when we have item and no error/loading -->
+  <div *ngIf="item && !loading && !error" class="detail-item">
     <h3>Contact Details</h3>
+    
     <div class="detail-field">
       <strong>ID</strong>
       <span>{{ item.id }}</span>
@@ -32,15 +37,21 @@
       <strong>Event Types</strong>
       <span>{{ formatEventTypes(item.event_types) }}</span>
     </div>
-    
     <div class="detail-field">
       <strong>Status</strong>
-      <span [ngClass]="item.is_active ? 'active' : 'inactive'">{{ item.is_active ? 'Active' : 'Inactive' }}</span>
+      <span [ngClass]="item.is_active ? 'active' : 'inactive'">
+        {{ item.is_active ? 'Active' : 'Inactive' }}
+      </span>
     </div>
+
     <div class="button-group">
       <button class="btn btn-primary" (click)="goEdit()">Edit</button>
       <a class="btn btn-secondary" routerLink="/items">Back to List</a>
     </div>
   </div>
-</div>
 
+  <!-- Optional: Show "No contact found" if item is null but not loading/error -->
+  <div *ngIf="!item && !loading && !error" class="not-found">
+    Contact not found.
+  </div>
+</div>

@@ -673,7 +673,7 @@ import { ItemsService } from '../../items.service';
 import { Item, EventType } from '../../item.model';
 
 interface EventTypeOption {
-  value: string;
+  id: string;
   label: string;
   selected: boolean;
 }
@@ -694,10 +694,10 @@ const DEFAULT_GROUPS: Group[] = [
 ];
 
 const EVENT_TYPE_OPTIONS: Omit<EventTypeOption, 'selected'>[] = [
-  { value: '911', label: '911' },
-  { value: 'Sos', label: 'Sos' },
-  { value: 'Timer', label: 'Timer' },
-  { value: 'Safewalk', label: 'Safewalk' }
+  { id: '1', label: 'Sos' },
+  { id: '2', label: '911' },
+  { id: '3', label: 'Timer' },
+  { id: '4', label: 'Safewalk' }
 ];
 
 @Component({
@@ -764,14 +764,25 @@ ngOnInit(): void {
 
   private loadPersistedGroups(): void {
     try {
+      // Check if we're in a browser environment where sessionStorage is available
+      const isBrowser = typeof window !== 'undefined' && window.sessionStorage;
+      if (!isBrowser) {
+        console.log('Skipping sessionStorage access in non-browser environment');
+        return;
+      }
+
       const stored = sessionStorage.getItem('allNotificationGroups');
       if (stored) {
-        const parsed: Group[] = JSON.parse(stored);
-        parsed.forEach(g => {
-          if (!this.allGroups.some(x => x.id === g.id)) {
-            this.allGroups.push(g);
-          }
-        });
+        try {
+          const parsed: Group[] = JSON.parse(stored);
+          parsed.forEach(g => {
+            if (!this.allGroups.some(x => x.id === g.id)) {
+              this.allGroups.push(g);
+            }
+          });
+        } catch (e) {
+          console.error('Error parsing stored groups:', e);
+        }
       }
     } catch (e) {
       console.warn('Failed to load stored groups', e);
@@ -780,43 +791,53 @@ ngOnInit(): void {
 
   private async loadContact(): Promise<void> {
     this.loading = true;
+    this.error = null;
+    
     try {
-      // Convert Observable to Promise and await the actual data
+      // Get the contact data
       const data = await firstValueFrom(
         this.itemsService.getContact(this.itemId!)
       );
 
-      // Now data is the actual Item, not an Observable
+      // Update the form with the loaded data
       this.item = { 
-        ...data, 
-        event_notification: data.event_notification || 'all' 
+        ...data,
+        event_notification: data.event_notification || 'all',
+        is_active: data.is_active ?? true
       };
 
-      // Populate selected groups
-      if (data.event_notification === 'selected' && data.event_notification_groups) {
+      // Initialize selected groups
+      this.selectedGroups = [];
+      if (data.event_notification_groups && data.event_notification_groups.length > 0) {
         this.selectedGroups = data.event_notification_groups
-          .filter((g: any) => g && g.id && g.group_name)
+          .filter((g: any) => g && (g.id || g.group_id) && (g.group_name || g.name))
           .map((g: any) => ({
-            id: String(g.id),
-            name: g.group_name
+            id: String(g.id || g.group_id),
+            name: g.group_name || g.name
           }));
-      } else {
-        this.selectedGroups = [];
       }
 
       // Update event type checkboxes
-      if (data.event_types) {
-        const selectedTypes = data.event_types.map((et: any) => et.event_name);
+      if (data.event_types && data.event_types.length > 0) {
+        const selectedTypes = data.event_types.map((et: any) => et.event_name || et.name);
         this.eventTypeOptions = this.eventTypeOptions.map(option => ({
           ...option,
-          selected: selectedTypes.includes(option.value)
+          selected: selectedTypes.includes(option.id)
         }));
       }
 
+      // Update the form's dirty state
+      this.formDirty = false;
+      
+      // Refresh the groups filter
       this.filterGroups();
+      
     } catch (error) {
-      this.error = 'Failed to load contact';
-      console.error(error);
+      console.error('Error loading contact:', error);
+      this.error = 'Failed to load contact. Please try again.';
+      if (error instanceof Error) {
+        this.error += ` ${error.message}`;
+      }
     } finally {
       this.loading = false;
     }
@@ -920,7 +941,7 @@ ngOnInit(): void {
   onEventTypeChange(value: string, isChecked: boolean): void {
     this.eventTypeOptions = this.eventTypeOptions.map(opt => ({
       ...opt,
-      selected: opt.value === value ? isChecked : opt.selected
+      selected: opt.id === value ? isChecked : opt.selected
     }));
     this.markFormDirty();
   }
@@ -935,7 +956,7 @@ ngOnInit(): void {
       // Build event_types
       this.item.event_types = this.eventTypeOptions
         .filter(opt => opt.selected)
-        .map(opt => ({ event_name: opt.value } as EventType));
+        .map(opt => ({ event_name: opt.id } as EventType));
 
       // Build groups
       this.item.event_notification_groups = this.selectedGroups.map(g => ({

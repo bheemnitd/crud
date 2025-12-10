@@ -80,7 +80,7 @@
               <div class="d-flex flex-wrap gap-1">
                 <ng-container *ngIf="it.event_types?.length; else noEvents">
                   <span *ngFor="let event of it.event_types" class="badge bg-primary text-nowrap">
-                    {{ event.event_name }},
+                    {{ event.event_name }}
                   </span>
                 </ng-container>
                 <ng-template #noEvents>

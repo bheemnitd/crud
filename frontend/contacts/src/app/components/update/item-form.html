@@ -1,15 +1,16 @@
 <!-- item-form.html -->
 <div class="container" [attr.aria-busy]="loading">
-  <!-- Loading indicator and headers remain the same -->
+  <!-- Loading Overlay -->
   <div *ngIf="loading" class="loading-overlay">
     <div class="spinner-border text-primary" role="status">
       <span class="visually-hidden">Loading...</span>
     </div>
   </div>
 
-  <h1 *ngIf="!item?.id" class="h3 mb-4">Create New Contact</h1>
-  <h1 *ngIf="item?.id" class="h3 mb-4">Edit Contact</h1>
+  <!-- Page Header -->
+  <h1 class="h3 mb-4">{{ item?.id ? 'Edit Contact' : 'Create New Contact' }}</h1>
 
+  <!-- Alert Messages -->
   <div *ngIf="error" class="alert alert-danger" role="alert">
     <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}
   </div>
@@ -19,174 +20,146 @@
     {{ item?.id ? 'Contact updated successfully!' : 'Contact created successfully!' }}
   </div>
 
+  <!-- Main Form -->
   <form #contactForm="ngForm" (ngSubmit)="save()" class="form-container" novalidate>
-    <!-- Existing form fields -->
-    <div class="form-group">
-      <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
-      <input id="first_name" name="first_name" [(ngModel)]="item.first_name" class="form-control"
-        [class.is-invalid]="formDirty && !item.first_name" placeholder="Enter first name" required
-        (input)="markFormDirty()">
-      <div *ngIf="formDirty && !item.first_name" class="invalid-feedback">
-        First name is required
-      </div>
-    </div>
-
-    <!-- Add other form fields similarly -->
-    <div class="form-group mt-3">
-      <label for="last_name" class="form-label">Last Name</label>
-      <input id="last_name" name="last_name" [(ngModel)]="item.last_name" class="form-control"
-        placeholder="Enter last name" (input)="markFormDirty()">
-    </div>
-
-    <!-- Email Field (new) -->
-    <div class="form-group mt-3">
-      <label for="email" class="form-label">Email</label>
-      <input id="email" name="email" type="email" [(ngModel)]="item.email" class="form-control"
-        [class.is-invalid]="formDirty && item.email && !isValidEmail(item.email)" placeholder="Enter email"
-        (input)="markFormDirty()">
-      <div *ngIf="formDirty && item.email && !isValidEmail(item.email)" class="invalid-feedback">
-        Please enter a valid email address
-      </div>
-    </div>
-
-    <!-- Mobile Field (new) -->
-    <div class="form-group mt-3">
-      <label for="mobile" class="form-label">Mobile</label>
-      <input id="mobile" name="mobile" type="tel" [(ngModel)]="item.mobile" class="form-control"
-        placeholder="Enter mobile number" (input)="markFormDirty()">
-    </div>
-<!-- Event Notification Section - FULLY UPGRADED -->
-<div class="form-group">
-  <label class="form-label">Event Notification</label>
-  <div class="d-flex gap-3">
-    <div class="form-check form-check-inline">
-      <input type="radio" 
-             id="notifyAll" 
-             [value]="'all'" 
-             name="event_notification"
-             [(ngModel)]="item.event_notification"
-             (ngModelChange)="onNotificationModeChange('all')"
-             class="form-check-input">
-      <label for="notifyAll" class="form-check-label">All Users</label>
-    </div>
-
-    <div class="form-check form-check-inline">
-      <input type="radio" 
-             id="notifySelected" 
-             [value]="'selected'" 
-             name="event_notification"
-             [(ngModel)]="item.event_notification"
-             (ngModelChange)="onNotificationModeChange('selected')"
-             class="form-check-input">
-      <label for="notifySelected" class="form-check-label">Selected Groups</label>
-    </div>
-  </div>
-
-  <!-- MODERN TAGS-INSIDE-INPUT MULTI-SELECT -->
-  <div *ngIf="item.event_notification === 'selected'" class="mt-3">
-    <div class="multi-select-wrapper position-relative">
-      <!-- Clickable input area with tags inside -->
-      <div class="multi-select-input form-control d-flex flex-wrap align-items-center gap-2 p-2"
-           [class.focused]="inputFocused"
-           (click)="focusInput()"
-           tabindex="0"
-           role="combobox"
-           aria-haspopup="listbox"
-           [attr.aria-expanded]="showDropdown">
-
-        <!-- Selected Tags -->
-        <span class="badge bg-primary text-white d-inline-flex align-items-center rounded-pill px-3 py-2 me-1"
-              *ngFor="let group of selectedGroups; trackBy: trackByGroupId">
-          {{ group.name }}
-          <button type="button" 
-                  class="btn-close btn-close-white ms-2" 
-                  (click)="removeGroup(group.id); $event.stopPropagation()"
-                  aria-label="Remove {{ group.name }}"></button>
-        </span>
-
-        <!-- Hidden search input (grows dynamically) -->
-        <input #groupInput
-               type="text"
-               [(ngModel)]="groupSearch"
-               [ngModelOptions]="{standalone: true}"
-               (input)="filterGroups()"
-               (focus)="onGroupInputFocus()"
-               (blur)="onGroupInputBlur()"
-               (keydown.enter)="onEnterKey($event)"
-               (keydown.backspace)="onBackspace()"
-               placeholder="{{ selectedGroups.length === 0 ? 'Type to search or add groups...' : '' }}"
-               class="border-0 outline-0 bg-transparent flex-grow-1"
-               style="min-width: 200px; padding: 0.375rem 0;"
-               autocomplete="off"
-               aria-autocomplete="list"
-               [attr.aria-controls]="'group-dropdown'"
-               [attr.aria-activedescendant]="filteredGroups.length > 0 ? 'group-' + filteredGroups[0].id : null">
-      </div>
-
-      <!-- Dropdown Menu -->
-      <div id="group-dropdown"
-           class="dropdown-menu w-100 shadow-lg border-0 mt-1"
-           [class.show]="showDropdown"
-           style="max-height: 240px; overflow-y: auto; border-radius: 8px; z-index: 1050;">
-        
-        <a href="javascript:void(0)"
-           class="dropdown-item d-flex align-items-center justify-content-between py-2 px-3"
-           *ngFor="let group of filteredGroups; let i = index"
-           [id]="'group-' + group.id"
-           (mousedown)="selectGroup(group); $event.preventDefault()"
-           role="option"
-           [attr.aria-selected]="false">
-          <span>{{ group.name }}</span>
-          <small *ngIf="group.isNew" class="badge bg-success ms-2">New</small>
-        </a>
-
-        <div class="dropdown-item text-muted text-center py-2"
-             *ngIf="groupSearch && filteredGroups.length === 0">
-          Press Enter to create "{{ groupSearch }}"
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="form-group">
+          <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
+          <input id="first_name" name="first_name" [(ngModel)]="item.first_name" class="form-control"
+            [class.is-invalid]="formDirty && !item.first_name" placeholder="Enter first name" required
+            (input)="markFormDirty()">
+          <div *ngIf="formDirty && !item.first_name" class="invalid-feedback">
+            First name is required
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-</div>
 
-    <!-- Event Types Section -->
-    <div class="form-group">
-      <label class="form-label">Event Types</label>
-      <div class="event-types-container">
-        <div *ngFor="let option of eventTypeOptions; let i = index" class="form-check">
-          <input type="checkbox" [id]="'event-' + option.value" [name]="'event-type-' + i" [ngModel]="option.selected"
-            (ngModelChange)="option.selected = $event; onEventTypeChange(option.value, $event)"
-            class="form-check-input">
-          <label [for]="'event-' + option.value" class="form-check-label">
-            {{ option.label }}
-          </label>
+      <div class="col-md-6">
+        <div class="form-group">
+          <label for="last_name" class="form-label">Last Name</label>
+          <input id="last_name" name="last_name" [(ngModel)]="item.last_name" class="form-control"
+            placeholder="Enter last name" (input)="markFormDirty()">
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="form-group">
+          <label for="email" class="form-label">Email</label>
+          <input id="email" name="email" type="email" [(ngModel)]="item.email" class="form-control"
+            [class.is-invalid]="formDirty && item.email && !isValidEmail(item.email)" placeholder="Enter email"
+            (input)="markFormDirty()">
+          <div *ngIf="formDirty && item.email && !isValidEmail(item.email)" class="invalid-feedback">
+            Please enter a valid email address
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="form-group">
+          <label for="mobile" class="form-label">Mobile</label>
+          <input id="mobile" name="mobile" type="tel" [(ngModel)]="item.mobile" class="form-control"
+            placeholder="Enter mobile number" (input)="markFormDirty()">
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="form-group">
+          <label class="form-label">Event Notification</label>
+          <div class="radio-group">
+            <div class="form-check form-check-inline">
+              <input type="radio" id="notifyAll" [value]="'all'" name="event_notification"
+                [(ngModel)]="item.event_notification" (ngModelChange)="onNotificationModeChange('all')"
+                class="form-check-input">
+              <label for="notifyAll" class="form-check-label">All Users</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input type="radio" id="notifySelected" [value]="'selected'" name="event_notification"
+                [(ngModel)]="item.event_notification" (ngModelChange)="onNotificationModeChange('selected')"
+                class="form-check-input">
+              <label for="notifySelected" class="form-check-label">Selected Groups</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="item.event_notification === 'selected'" class="col-12">
+        <div class="form-group">
+          <label class="form-label">Select Groups</label>
+          <div class="multi-select-wrapper">
+            <div class="multi-select-input form-control" [class.focused]="inputFocused" (click)="focusInput()" tabindex="0">
+              <ng-container *ngIf="selectedGroups.length > 0; else emptyState">
+                <span class="selected-tag" *ngFor="let group of selectedGroups">
+                  {{ group.name }}
+                  <button type="button" class="remove-tag" (click)="removeGroup(group.id); $event.stopPropagation()">
+                    &times;
+                  </button>
+                </span>
+              </ng-container>
+              <ng-template #emptyState>
+                <span class="placeholder">Type to search or add groups...</span>
+              </ng-template>
+              <input #groupInput type="text" [(ngModel)]="groupSearch" [ngModelOptions]="{standalone: true}"
+                (input)="filterGroups()" (focus)="onGroupInputFocus()" (blur)="onGroupInputBlur()"
+                (keydown.enter)="onEnterKey($event)" (keydown.backspace)="onBackspace()" class="group-search-input">
+            </div>
+
+            <div class="dropdown-menu" [class.show]="showDropdown">
+              <a href="javascript:void(0)" class="dropdown-item" *ngFor="let group of filteredGroups"
+                (mousedown)="selectGroup(group); $event.preventDefault()">
+                {{ group.name }}
+                <span *ngIf="group.isNew" class="badge bg-success ms-2">New</span>
+              </a>
+              <div class="dropdown-item text-muted" *ngIf="groupSearch && filteredGroups.length === 0">
+                Press Enter to create "{{ groupSearch }}"
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="form-group">
+          <label class="form-label">Available Events</label>
+          <div class="event-types-container">
+            <div *ngFor="let option of eventTypeOptions" class="form-check form-check-inline me-3">
+              <input type="checkbox" [id]="'event-' + option.id" [name]="'event-type-' + option.id"
+                [(ngModel)]="option.selected" (ngModelChange)="onEventTypeChange(option.id, $event)"
+                class="form-check-input">
+              <label [for]="'event-' + option.id" class="form-check-label">
+                {{ option.label }}
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="form-group">
+          <label class="form-label d-block mb-2">Contact Status</label>
+          <div class="status-options">
+            <div class="form-check form-check-inline">
+              <input type="radio" class="form-check-input" id="statusActive" [value]="true" name="status"
+                [(ngModel)]="item.is_active" (ngModelChange)="item.is_active = $event; markFormDirty()">
+              <label class="form-check-label" for="statusActive">Active</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input type="radio" class="form-check-input" id="statusInactive" [value]="false" name="status"
+                [(ngModel)]="item.is_active" (ngModelChange)="item.is_active = $event; markFormDirty()">
+              <label class="form-check-label" for="statusInactive">Inactive</label>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Status Section -->
-    <div class="form-group">
-      <label class="form-label">Status</label>
-      <div class="d-flex flex-column gap-2">
-        <div class="form-check">
-          <input type="radio" class="form-check-input" id="statusActive" [value]="true" [name]="'status'"
-            [ngModel]="item.is_active" (ngModelChange)="item.is_active = $event; markFormDirty()">
-          <label class="form-check-label" for="statusActive">Active</label>
-        </div>
-        <div class="form-check">
-          <input type="radio" class="form-check-input" id="statusInactive" [value]="false" [name]="'status'"
-            [ngModel]="item.is_active" (ngModelChange)="item.is_active = $event; markFormDirty()">
-          <label class="form-check-label" for="statusInactive">Inactive</label>
-        </div>
-      </div>
-    </div>
     <!-- Form Actions -->
-    <div class="form-actions mt-4">
-      <button type="submit" class="btn btn-primary me-2" [disabled]="saving || !formDirty">
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary px-4" [disabled]="saving || !formDirty">
         <span *ngIf="saving" class="spinner-border spinner-border-sm me-2" role="status"></span>
-        {{ saving ? 'Saving...' : 'Save' }}
+        {{ saving ? 'Saving...' : 'Save Changes' }}
       </button>
-      <button type="button" class="btn btn-outline-secondary" (click)="onCancel()">
+      <button type="button" class="btn btn-outline-secondary px-4" (click)="onCancel()">
         Cancel
       </button>
     </div>

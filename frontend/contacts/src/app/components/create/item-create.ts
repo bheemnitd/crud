@@ -441,14 +441,17 @@ export class ItemCreateComponent implements OnInit {
   // Load groups from sessionStorage (like your update component)
   private loadPersistedGroups(): void {
     try {
-      const stored = sessionStorage.getItem('allNotificationGroups');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        parsed.forEach((g: Group) => {
-          if (!this.allGroups.some(x => x.id === g.id)) {
-            this.allGroups.push(g);
-          }
-        });
+      // Check if we're in a browser environment
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        const stored = sessionStorage.getItem('allNotificationGroups');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          parsed.forEach((g: Group) => {
+            if (!this.allGroups.some(x => x.id === g.id)) {
+              this.allGroups.push(g);
+            }
+          });
+        }
       }
     } catch (e) {
       console.warn('Failed to load groups from storage', e);
@@ -502,22 +505,31 @@ export class ItemCreateComponent implements OnInit {
     }
   }
 
-  selectGroup(group: Group): void {
-    if (this.selectedGroups.some(g => g.id === group.id)) return;
+selectGroup(group: Group): void {
+  if (this.selectedGroups.some(g => g.id === group.id)) return;
 
-    this.selectedGroups = [...this.selectedGroups, { id: group.id, name: group.name }];
+  this.selectedGroups = [...this.selectedGroups, { id: group.id, name: group.name }];
 
-    if (group.isNew) {
-      this.allGroups = [...this.allGroups, { id: group.id, name: group.name }];
-      try {
-        sessionStorage.setItem('allNotificationGroups', JSON.stringify(this.allGroups));
-      } catch {}
+  if (group.isNew) {
+    this.allGroups = [...this.allGroups, { id: group.id, name: group.name }];
+    try {
+      sessionStorage.setItem('allNotificationGroups', JSON.stringify(this.allGroups));
+    } catch (e) {
+      console.warn('Failed to save groups to storage', e);
     }
-
-    this.groupSearch = '';
-    this.filterGroups();
-    this.groupInput.nativeElement.focus();
   }
+
+  this.groupSearch = '';
+  this.filterGroups();
+  
+  // Safely focus the input
+  if (this.groupInput?.nativeElement) {
+    // Use setTimeout to ensure change detection runs first
+    setTimeout(() => {
+      this.groupInput?.nativeElement?.focus();
+    });
+  }
+}
 
   removeGroup(id: string): void {
     this.selectedGroups = this.selectedGroups.filter(g => g.id !== id);
