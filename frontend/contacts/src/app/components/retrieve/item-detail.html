@@ -1,6 +1,7 @@
 <div class="container">
-  <div *ngIf="loading" class="loading">Loading...</div>
-  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+  <div *ngIf="loading">Loading...</div>
+<div *ngIf="error" class="error">{{ error }}</div>
+<div *ngIf="!loading && !error">
   <div *ngIf="item" class="detail-item">
     <h3>Contact Details</h3>
     <div class="detail-field">

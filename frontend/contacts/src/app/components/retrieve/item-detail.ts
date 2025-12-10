@@ -30,24 +30,23 @@ export class ItemDetailComponent implements OnInit {
     });
   }
 
-  private async loadItem(id: string): Promise<void> {
-    this.loading = true;
-    this.error = null;
+private loadItem(id: string): void {
+  this.loading = true;
+  this.error = null;
 
-    try {
-      const response = await this.itemsService.getContact(id);
-      if (response) {
-        this.item = response;
-      } else {
-        this.error = 'Contact not found';
-      }
-    } catch (error) {
+  this.itemsService.getContact(id).subscribe({
+    next: (response: Item) => {
+      this.item = response;
+    },
+    error: (error) => {
       console.error('Error loading contact:', error);
       this.error = 'Failed to load contact details. Please try again.';
-    } finally {
+    },
+    complete: () => {
       this.loading = false;
     }
-  }
+  });
+}
 
   goEdit(): void {
     if (!this.item) return;

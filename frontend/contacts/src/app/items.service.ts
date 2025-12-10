@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { Item, EventNotificationGroup, EventType } from './item.model';
+import { firstValueFrom, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { Item as ItemModel, EventNotificationGroup, EventType } from './item.model';
+
+export type Item = ItemModel; // Re-export for backward compatibility
 import { environment } from '../environments/environment';
 
 const API_BASE = environment.apiUrl;
@@ -43,11 +46,10 @@ export class ItemsService {
   }
 
   // Contact - Single
-  async getContact(id: number | string): Promise<Item> {
-    const response = await firstValueFrom(
-      this.http.get<Item>(`${API_BASE}/contacts/${id}/`)
+  getContact(id: number | string): Observable<Item> {
+    return this.http.get<Item>(`${API_BASE}/contacts/${id}/`).pipe(
+      map(response => this.toFrontendFormat(response))
     );
-    return this.toFrontendFormat(response);
   }
 
   private readonly NOTIFICATION_GROUP_MAP: { [key: string]: number } = {
