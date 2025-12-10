@@ -35,7 +35,12 @@ export class ItemDetailComponent implements OnInit {
     this.error = null;
 
     try {
-      this.item = await this.itemsService.getContact(id);
+      const response = await this.itemsService.getContact(id);
+      if (response) {
+        this.item = response;
+      } else {
+        this.error = 'Contact not found';
+      }
     } catch (error) {
       console.error('Error loading contact:', error);
       this.error = 'Failed to load contact details. Please try again.';

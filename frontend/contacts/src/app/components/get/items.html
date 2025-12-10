@@ -1,0 +1,133 @@
+<div class="container-fluid">
+  <header class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Enterprise Emergency Contacts</h1>
+    <nav>
+      <button (click)="goCreate()" class="btn btn-primary float-end">New Contact</button>
+    </nav>
+  </header>
+
+  <section class="filter-section">
+    <form (ngSubmit)="onSearch()" class="filter-form">
+      <div class="form-group d-flex align-items-center">
+        <label for="search" class="form-label me-2 mb-0">Search:</label>
+        <input type="text" id="search" class="form-control" [(ngModel)]="search" name="search"
+          placeholder="Search by name or email" />
+      </div>
+      <div class="form-group d-flex align-items-center">
+        <label for="status" class="form-label me-2 mb-0">Status:</label>
+        <select id="status" class="form-control" [(ngModel)]="status" name="status" (change)="onStatusChange()">
+          <option value="all">All</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+      <div class="form-group d-flex align-items-center ms-auto">
+        <div class="d-flex gap-3">
+          <button type="submit" class="btn btn-primary">Search</button>
+          <button type="button" (click)="onClear()" class="btn btn-secondary">Clear</button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <main>
+    <div *ngIf="loading" class="loading text-center py-5">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+
+    <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
+    <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+    <!-- LIST TABLE -->
+    <div class="table-responsive">
+      <table *ngIf="!loading && filteredItems?.length" class="table table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Email</th>
+            <th>Mobile</th>
+            <th>Eventy Type</th>
+            <th>Active</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let it of filteredItems">
+            <td>
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="goEdit(it.id)">
+                {{ it.first_name || 'N/A' }}
+              </button>
+            </td>
+            <td>
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="goEdit(it.id)">
+                {{ it.last_name || 'N/A' }}
+              </button>
+            </td>
+            <td>
+              <a href="mailto:{{ it.email }}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-envelope me-1"></i>{{ it.email || 'N/A' }}
+              </a>
+            </td>
+            <td>
+              <a href="tel:{{ it.mobile }}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-telephone me-1"></i>{{ it.mobile || 'N/A' }}
+              </a>
+            </td>
+            <td>
+              <div class="d-flex flex-wrap gap-1">
+                <ng-container *ngIf="it.event_types?.length; else noEvents">
+                  <span *ngFor="let event of it.event_types" class="badge bg-primary text-nowrap">
+                    {{ event.event_name }},
+                  </span>
+                </ng-container>
+                <ng-template #noEvents>
+                  <span class="text-muted">-</span>
+                </ng-template>
+              </div>
+            </td>
+            <td class="text-center">
+              <div class="form-check d-inline-block">
+                <input type="checkbox" class="form-check-input" [checked]="it.is_active" disabled>
+              </div>
+            </td>
+            <td class="action-buttons">
+              <div class="d-flex gap-2">
+                <button type="button" (click)="goView(it.id)" class="btn btn-sm btn-outline-primary" title="View">
+                  <i class="bi bi-eye"></i>
+                </button>
+                <button type="button" (click)="goEdit(it.id)" class="btn btn-sm btn-outline-secondary" title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button type="button" (click)="remove(it.id)" class="btn btn-sm btn-outline-danger" title="Delete">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loading && (!filteredItems || filteredItems.length === 0)" class="text-center py-5 text-muted">
+      <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.5;"></i>
+      <p class="mt-2">No contacts found.</p>
+      <button (click)="onClear()" class="btn btn-outline-primary mt-2">Clear filters</button>
+    </div>
+
+    <!-- PAGINATION -->
+    <div *ngIf="!loading && totalPages > 1"
+      class="pagination d-flex justify-content-center align-items-center gap-3 mt-4">
+      <button class="btn btn-outline-primary" (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1">
+        <i class="bi bi-chevron-left"></i> Previous
+      </button>
+      <span>Page {{ currentPage }} of {{ totalPages }} ({{ totalItems }} total)</span>
+      <button class="btn btn-outline-primary" (click)="onPageChange(currentPage + 1)"
+        [disabled]="currentPage === totalPages">
+        Next <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+  </main>
+</div>

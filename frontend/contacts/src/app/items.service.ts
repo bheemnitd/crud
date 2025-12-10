@@ -2,8 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { Item, EventNotificationGroup, EventType } from './item.model';
+import { environment } from '../environments/environment';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = environment.apiUrl;
 
 export interface BackendValidationError {
   [key: string]: string[];

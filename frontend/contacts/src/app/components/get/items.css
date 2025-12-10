@@ -1,0 +1,485 @@
+/* Main Container */
+:host {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 1rem;
+  overflow: hidden;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.header h1 {
+  color: #1f2933;
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Table Container */
+.table-container {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: auto;
+  margin-top: 1rem;
+  border: 1px solid #e9ecef;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 200px);
+}
+
+/* Table Styles */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  table-layout: fixed;
+  min-width: 1000px;
+}
+
+thead {
+  background: #1f2933;
+  color: #fff;
+}
+
+th, td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+th {
+  font-weight: 600;
+  border-bottom: 2px solid #1890ff;
+}
+
+tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+tbody tr:hover {
+  background: #fafafa;
+}
+
+/* Table Cell Buttons */
+td {
+  vertical-align: middle;
+  padding: 0.5rem !important;
+}
+
+td .btn {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  text-align: left;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0.25rem 0.5rem;
+  margin: 0.1rem 0;
+  width: 100%;
+}
+
+/* Action Buttons */
+.action-buttons {
+  white-space: nowrap;
+  min-width: 150px;
+}
+
+.action-buttons .btn {
+  width: auto;
+  padding: 0.25rem 0.5rem;
+  line-height: 1;
+  justify-content: center;
+}
+
+.action-buttons .btn i {
+  font-size: 1rem;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* Buttons */
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  line-height: 1.5;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  user-select: none;
+  border: 1px solid transparent;
+}
+
+/* Primary Button */
+.btn-primary {
+  background-color: #1890ff;
+  color: white;
+  border-color: #1890ff;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  background-color: #096dd9;
+  border-color: #096dd9;
+  box-shadow: 0 2px 6px rgba(24, 144, 255, 0.3);
+}
+
+.btn-primary:active {
+  background-color: #0050b3;
+  border-color: #0050b3;
+}
+
+/* Secondary Button */
+.btn-secondary {
+  background-color: #f5f5f5;
+  color: #333;
+  border: 1px solid #d9d9d9;
+}
+
+.btn-secondary:hover, .btn-secondary:focus {
+  background-color: #e6e6e6;
+  border-color: #adadad;
+  color: #333;
+}
+
+.btn-secondary:active {
+  background-color: #d9d9d9;
+  border-color: #999;
+}
+
+.btn-danger {
+  background: #ff4d4f;
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background: #d9363e;
+  box-shadow: 0 2px 6px rgba(255, 77, 79, 0.3);
+}
+
+/* Filter Section */
+.filter-section {
+  background: #fff;
+  padding: 1rem;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+}
+
+.filter-form {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.filter-form::-webkit-scrollbar {
+  height: 4px;
+}
+
+.filter-form::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 2px;
+}
+
+.filter-form::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 2px;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.filter-form {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: thin;  /* Firefox */
+}
+
+.form-group {
+  margin-bottom: 0;
+  min-width: 180px;
+  flex: 0 0 auto;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-control:focus {
+  border-color: #1890ff;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.btn-filter {
+  background: #1890ff;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.btn-filter:hover {
+  background: #096dd9;
+}
+
+.btn-clear {
+  background: #f5f5f5;
+  color: #333;
+  border: 1px solid #d9d9d9;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-clear:hover {
+  background: #e6f7ff;
+  border-color: #91d5ff;
+  color: #096dd9;
+}
+
+/* Responsive Styles */
+@media (max-width: 992px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .action-buttons {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .filter-form {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .form-group {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .btn-filter, .btn-clear {
+    width: 100%;
+    padding: 0.625rem;
+  }
+  
+  th, td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.85rem;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .action-buttons .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .pagination {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  
+  .page-info {
+    text-align: center;
+    margin: 0 0 0.5rem 0;
+  }
+  
+  .pagination-buttons {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.status-active {
+  background-color: #e6f7ff;
+  color: #1890ff;
+  border: 1px solid #91d5ff;
+}
+
+.status-inactive {
+  background-color: #fff2f0;
+  color: #ff4d4f;
+  border: 1px solid #ffccc7;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 1rem;
+  background: #fff;
+  border-top: 1px solid #f0f0f0;
+  gap: 0.5rem;
+}
+
+.page-info {
+  font-size: 0.875rem;
+  color: #666;
+  margin-right: 1rem;
+}
+
+.page-button {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.page-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.page-button:not(:disabled):hover {
+  border-color: #1890ff;
+  color: #1890ff;
+}
+
+.page-button.active {
+  background: #1890ff;
+  border-color: #1890ff;
+  color: white;
+}
+
+/* Empty State */
+.no-data {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #8c8c8c;
+  font-size: 1rem;
+  background: #fafafa;
+  border-radius: 4px;
+  border: 1px dashed #e8e8e8;
+  margin: 1rem 0;
+}
+
+.no-data i {
+  font-size: 2.5rem;
+  color: #d9d9d9;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+/* Loading State */
+.loading {
+  text-align: center;
+  padding: 40px 0;
+  color: #666;
+  font-size: 16px;
+}
+
+/* Responsive Table */
+@media (max-width: 768px) {
+  .table-container {
+    border-radius: 0;
+    margin: 0 -16px;
+    width: calc(100% + 32px);
+  }
+  
+  table {
+    font-size: 13px;
+  }
+  
+  th, td {
+    padding: 8px;
+  }
+  
+  .btn {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .btn {
+    padding: 4px 6px;
+    font-size: 10px;
+  }
+  
+  .btn i {
+    margin: 0;
+  }
+}

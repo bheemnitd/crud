@@ -1,0 +1,151 @@
+<!-- item-form.html -->
+<div class="container" [attr.aria-busy]="loading">
+  <!-- Loading indicator and headers remain the same -->
+  <div *ngIf="loading" class="loading-overlay">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <h1 *ngIf="!item?.id" class="h3 mb-4">Create New Contact</h1>
+  <h1 *ngIf="item?.id" class="h3 mb-4">Edit Contact</h1>
+
+  <div *ngIf="error" class="alert alert-danger" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}
+  </div>
+
+  <div *ngIf="success" class="alert alert-success" role="alert">
+    <i class="bi bi-check-circle-fill me-2"></i>
+    {{ item?.id ? 'Contact updated successfully!' : 'Contact created successfully!' }}
+  </div>
+
+  <form #contactForm="ngForm" (ngSubmit)="save()" class="form-container" novalidate>
+    <!-- Existing form fields -->
+    <div class="form-group">
+      <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
+      <input id="first_name" name="first_name" [(ngModel)]="item.first_name" class="form-control"
+        [class.is-invalid]="formDirty && !item.first_name" placeholder="Enter first name" required
+        (input)="markFormDirty()">
+      <div *ngIf="formDirty && !item.first_name" class="invalid-feedback">
+        First name is required
+      </div>
+    </div>
+
+    <!-- Add other form fields similarly -->
+    <div class="form-group mt-3">
+      <label for="last_name" class="form-label">Last Name</label>
+      <input id="last_name" name="last_name" [(ngModel)]="item.last_name" class="form-control"
+        placeholder="Enter last name" (input)="markFormDirty()">
+    </div>
+
+    <!-- Email Field (new) -->
+    <div class="form-group mt-3">
+      <label for="email" class="form-label">Email</label>
+      <input id="email" name="email" type="email" [(ngModel)]="item.email" class="form-control"
+        [class.is-invalid]="formDirty && item.email && !isValidEmail(item.email)" placeholder="Enter email"
+        (input)="markFormDirty()">
+      <div *ngIf="formDirty && item.email && !isValidEmail(item.email)" class="invalid-feedback">
+        Please enter a valid email address
+      </div>
+    </div>
+
+    <!-- Mobile Field (new) -->
+    <div class="form-group mt-3">
+      <label for="mobile" class="form-label">Mobile</label>
+      <input id="mobile" name="mobile" type="tel" [(ngModel)]="item.mobile" class="form-control"
+        placeholder="Enter mobile number" (input)="markFormDirty()">
+    </div>
+    <!-- Event Notification Section -->
+    <div class="form-group">
+      <label class="form-label">Event Notification</label>
+      <div class="d-flex gap-3">
+        <div class="form-check form-check-inline">
+          <input type="radio" id="notifyAll" [value]="'all'" [name]="'event_notification'"
+            [ngModel]="item.event_notification"
+            (ngModelChange)="item.event_notification = $event; onNotificationModeChange($event)"
+            class="form-check-input">
+          <label for="notifyAll" class="form-check-label">All Users</label>
+        </div>
+
+        <div class="form-check form-check-inline">
+          <input type="radio" id="notifySelected" [value]="'selected'" [name]="'event_notification'"
+            [ngModel]="item.event_notification"
+            (ngModelChange)="item.event_notification = $event; onNotificationModeChange($event)"
+            class="form-check-input">
+          <label for="notifySelected" class="form-check-label">Selected Groups</label>
+        </div>
+      </div>
+
+      <div *ngIf="item.event_notification === 'selected'" class="mt-3">
+        <div class="selected-groups mb-2" *ngIf="selectedGroups.length > 0">
+          <span class="badge bg-primary me-2 mb-2 d-inline-flex align-items-center"
+            *ngFor="let group of selectedGroups; trackBy: trackByGroupId">
+            {{ group.name }}
+            <button type="button" class="btn-close btn-close-white ms-2" (click)="removeGroup(group.id)"
+              aria-label="Remove"></button>
+          </span>
+        </div>
+
+        <div class="position-relative">
+          <input type="text" class="form-control" [(ngModel)]="groupSearch" [ngModelOptions]="{standalone: true}"
+            (input)="filterGroups()" (keyup.enter)="onEnterKey($event)" (focus)="filterGroups()"
+            placeholder="Search and select groups..." [disabled]="loadingGroups" autocomplete="off">
+
+          <div class="dropdown-menu w-100 position-absolute" [class.show]="filteredGroups.length > 0"
+            style="max-height: 200px; overflow-y: auto; z-index: 1000;">
+            <a class="dropdown-item d-flex align-items-center justify-content-between"
+              *ngFor="let group of filteredGroups" (click)="selectGroup(group)" style="cursor: pointer;">
+              <span>{{ group.name }}</span>
+              <span *ngIf="group.isNew" class="badge bg-info">New</span>
+            </a>
+            <div *ngIf="filteredGroups.length === 0 && groupSearch" class="dropdown-item text-muted">
+              No groups found. Press Enter to create "{{ groupSearch }}"
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Event Types Section -->
+    <div class="form-group">
+      <label class="form-label">Event Types</label>
+      <div class="event-types-container">
+        <div *ngFor="let option of eventTypeOptions; let i = index" class="form-check">
+          <input type="checkbox" [id]="'event-' + option.value" [name]="'event-type-' + i" [ngModel]="option.selected"
+            (ngModelChange)="option.selected = $event; onEventTypeChange(option.value, $event)"
+            class="form-check-input">
+          <label [for]="'event-' + option.value" class="form-check-label">
+            {{ option.label }}
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Section -->
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <div class="d-flex flex-column gap-2">
+        <div class="form-check">
+          <input type="radio" class="form-check-input" id="statusActive" [value]="true" [name]="'status'"
+            [ngModel]="item.is_active" (ngModelChange)="item.is_active = $event; markFormDirty()">
+          <label class="form-check-label" for="statusActive">Active</label>
+        </div>
+        <div class="form-check">
+          <input type="radio" class="form-check-input" id="statusInactive" [value]="false" [name]="'status'"
+            [ngModel]="item.is_active" (ngModelChange)="item.is_active = $event; markFormDirty()">
+          <label class="form-check-label" for="statusInactive">Inactive</label>
+        </div>
+      </div>
+    </div>
+    <!-- Form Actions -->
+    <div class="form-actions mt-4">
+      <button type="submit" class="btn btn-primary me-2" [disabled]="saving || !formDirty">
+        <span *ngIf="saving" class="spinner-border spinner-border-sm me-2" role="status"></span>
+        {{ saving ? 'Saving...' : 'Save' }}
+      </button>
+      <button type="button" class="btn btn-outline-secondary" (click)="onCancel()">
+        Cancel
+      </button>
+    </div>
+  </form>
+</div>
