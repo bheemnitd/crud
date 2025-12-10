@@ -57,22 +57,22 @@
         <tbody>
           <tr *ngFor="let it of filteredItems">
             <td>
-              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="goEdit(it.id)">
+              <button type="button"  (click)="goEdit(it.id)">
                 {{ it.first_name || 'N/A' }}
               </button>
             </td>
             <td>
-              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="goEdit(it.id)">
+              <button type="button" (click)="goEdit(it.id)">
                 {{ it.last_name || 'N/A' }}
               </button>
             </td>
             <td>
-              <a href="mailto:{{ it.email }}" class="btn btn-sm btn-outline-primary">
+              <a href="mailto:{{ it.email }}">
                 <i class="bi bi-envelope me-1"></i>{{ it.email || 'N/A' }}
               </a>
             </td>
             <td>
-              <a href="tel:{{ it.mobile }}" class="btn btn-sm btn-outline-primary">
+              <a href="tel:{{ it.mobile }}" >
                 <i class="bi bi-telephone me-1"></i>{{ it.mobile || 'N/A' }}
               </a>
             </td>

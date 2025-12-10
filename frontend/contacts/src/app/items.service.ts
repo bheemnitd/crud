@@ -73,6 +73,18 @@ private toBackendFormat(frontendData: any): any {
   const shouldUseAllGroups = !frontendData.event_notification || frontendData.event_notification === 'all';
   const allGroupIds = Object.values(this.NOTIFICATION_GROUP_MAP).filter(id => id !== 0);
   
+  // Convert string IDs to numbers and filter out any invalid IDs
+  const eventTypeIds = Array.isArray(frontendData.eventTypesArray)
+    ? frontendData.eventTypesArray
+        .map((id: string) => parseInt(id, 10))
+        .filter((id: number) => !isNaN(id) && id > 0)
+    : [];
+  
+  console.log('Sending to backend:', {
+    ...frontendData,
+    event_types_ids: eventTypeIds
+  });
+  
   return {
     first_name: frontendData.first_name || '',
     last_name: frontendData.last_name || '',
@@ -80,8 +92,8 @@ private toBackendFormat(frontendData: any): any {
     mobile: frontendData.mobile || '',
     event_notification_groups_ids: shouldUseAllGroups 
       ? allGroupIds 
-      : frontendData.event_notification_groups?.map((type: string) => this.NOTIFICATION_GROUP_MAP[type] || 0).filter(Boolean) || [],
-    event_types_ids: frontendData.eventTypesArray?.map((type: string) => this.EVENT_CODE_MAP[type] || 0).filter(Boolean) || [],
+      : frontendData.event_notification_groups?.map((g: any) => parseInt(g.id, 10)).filter((id: number) => !isNaN(id)) || [],
+    event_types_ids: eventTypeIds,
     is_active: frontendData.is_active ?? false
   };
 }
